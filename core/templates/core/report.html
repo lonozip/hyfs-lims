@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">报告管理</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="/admin/core/report/add/" class="btn btn-primary">
+                添加报告
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th>报告ID</th>
+                    <th>报告名称</th>
+                    <th>客户</th>
+                    <th>订单编号</th>
+                    <th>创建时间</th>
+                    <th>创建人</th>
+                    <th>负责员工</th>
+                    <th>更新时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td><a href="{% url 'report_detail' report.id %}">{{ report.report_id }}</a></td>
+                    <td>{{ report.name }}</td>
+                    <td>{{ report.client.name }}</td>
+                    <td>{{ report.order.order_id|default:"-" }}</td>
+                    <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>   
+                    <td>{{ report.created_by.username|default:"-" }}</td>
+                    <td>
+                        {% for staff in report.staff.all %}
+                            {% if forloop.first %}
+                                {{ staff.name }}
+                            {% else %}
+                                , {{ staff.name }}
+                            {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td>{{ report.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if report.status == 'pending' %}
+                            <span class="badge bg-warning">待处理</span>
+                        {% elif report.status == 'in_progress' %}
+                            <span class="badge bg-info">处理中</span>
+                        {% elif report.status == 'completed' %}
+                            <span class="badge bg-success">已完成</span>
+                        {% elif report.status == 'cancelled' %}
+                            <span class="badge bg-danger">已取消</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/admin/core/report/{{ report.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <form action="{% url 'report_delete' report.id %}" method="POST" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个报告吗？');">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}    
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

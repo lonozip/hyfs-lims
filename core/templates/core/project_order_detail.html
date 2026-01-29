@@ -1,0 +1,169 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">方案详情</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="/admin/core/project_order/{{ project_order.id }}/change/" class="btn btn-primary">
+                编辑方案
+            </a>
+            <a href="{% url 'project_order_list' %}" class="btn btn-secondary ml-2">
+                返回列表
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- 基本信息卡片 -->
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">基本信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>方案ID:</strong> {{ project_order.project_id }}</p>
+                                <p><strong>方案名称:</strong> {{ project_order.name }}</p>
+                                <p><strong>客户:</strong> {{ project_order.client.name }}</p>
+                                <p><strong>订单编号:</strong> {{ project_order.order.order_id|default:"-" }}</p>
+                                <p><strong>方案状态:</strong> 
+                                    {% if project_order.status == 'pending' %}
+                                        <span class="badge bg-warning">待处理</span>
+                                    {% elif project_order.status == 'in_progress' %}
+                                        <span class="badge bg-info">处理中</span>
+                                    {% elif project_order.status == 'completed' %}
+                                        <span class="badge bg-success">已完成</span>
+                                    {% elif project_order.status == 'cancelled' %}
+                                        <span class="badge bg-danger">已取消</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>创建人:</strong> {{ project_order.created_by.username|default:"-" }}</p>
+                                <p><strong>创建时间:</strong> {{ project_order.created_at|date:"Y-m-d H:i:s" }}</p>
+                                <p><strong>更新时间:</strong> {{ project_order.updated_at|date:"Y-m-d H:i:s" }}</p>
+                                <p><strong>负责员工:</strong></p>
+                                <ul class="list-unstyled">
+                                    {% for staff in project_order.staff.all %}
+                                        <li>{{ staff.name }}</li>
+                                    {% empty %}
+                                        <li>-</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <p><strong>方案描述:</strong></p>
+                        <p>{{ project_order.description|default:"无" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 样品信息卡片 -->
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">样品信息</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if samples %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>样品编号</th>
+                                            <th>客户</th>
+                                            <th>样品类型</th>
+                                            <th>采集日期</th>
+                                            <th>接收日期</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sample in samples %}
+                                            <tr>
+                                                <td>{{ sample.sample_id }}</td>
+                                                <td>{{ sample.client.name }}</td>
+                                                <td>{{ sample.sample_type.name|default:"-" }}</td>
+                                                <td>{{ sample.collection_date|date:"Y-m-d" }}</td>
+                                                <td>{{ sample.received_date|date:"Y-m-d H:i" }}</td>
+                                                <td>
+                                                    {% if sample.status == 'pending' %}
+                                                        <span class="badge bg-warning">待处理</span>
+                                                    {% elif sample.status == 'in_progress' %}
+                                                        <span class="badge bg-info">处理中</span>
+                                                    {% elif sample.status == 'completed' %}
+                                                        <span class="badge bg-success">已完成</span>
+                                                    {% elif sample.status == 'cancelled' %}
+                                                        <span class="badge bg-danger">已取消</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>该方案未关联任何样品</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试类型卡片 -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">测试类型</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if test_types %}
+                            <ul class="list-group">
+                                {% for test_type in test_types %}
+                                    <li class="list-group-item">
+                                        <strong>{{ test_type.test_name }}</strong>
+                                        {% if test_type.unit %}<span class="text-muted"> (单位: {{ test_type.unit }})</span>{% endif %}
+                                        {% if test_type.reference_range %}<br><small>参考范围: {{ test_type.reference_range }}</small>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>该方案未关联任何测试类型</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标准卡片 -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">关联标准</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if standards %}
+                            <ul class="list-group">
+                                {% for standard in standards %}
+                                    <li class="list-group-item">
+                                        <strong>{{ standard.standard_id }}</strong> - {{ standard.name }}
+                                        <br><small>类型: {{ standard.standard_type }}</small>
+                                        <br><small>状态: 
+                                            {% if standard.status == 'pending' %}待实行
+                                            {% elif standard.status == 'in_progress' %}试行中
+                                            {% elif standard.status == 'completed' %}已实行
+                                            {% elif standard.status == 'cancelled' %}已取消
+                                            {% endif %}
+                                        </small>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>该方案未关联任何标准</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
