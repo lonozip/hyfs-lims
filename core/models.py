@@ -202,50 +202,6 @@ class Sample(models.Model):
 #         verbose_name_plural = '测试类型'
 
 
-class Standard(models.Model):
-    """标准模型 - 合并了测试类型(TestType)的功能"""
-    # 标准名称
-    name = models.CharField(max_length=255, verbose_name='标准名称')
-    # 测试名称
-    test_name = models.CharField(max_length=255, default='', verbose_name='测试名称')
-    # 测试描述
-    description = models.TextField(blank=True, verbose_name='测试描述')
-    # 测试单位
-    unit = models.CharField(max_length=50, default='', verbose_name='测试单位')
-    # 参考范围
-    reference_range = models.CharField(max_length=100, default='', verbose_name='参考范围')
-    # 标准状态选项                                
-    STATUS_CHOICES = [
-        ('pending', '待实行'),
-        ('in_progress', '试行中'),
-        ('completed', '已实行'),
-        ('cancelled', '已取消'),
-    ]
-
-    # 标准类型
-    standard_type = models.CharField(max_length=255, verbose_name='标准类型')
-    # 标准编号
-    standard_id = models.CharField(max_length=50, unique=True, verbose_name='标准编号')
-    # 采集日期
-    collection_date = models.DateTimeField(verbose_name='采集日期')
-    # 标准状态
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
-    # 创建人
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-    # 创建时间
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    # 更新时间
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-
-    def __str__(self):
-        """返回标准编号作为字符串表示"""
-        return self.standard_id
-
-    class Meta:
-        verbose_name = '标准'
-        verbose_name_plural = '标准'
-
-
 class Test(models.Model):
     """测试记录模型"""
     # 测试状态选项
@@ -259,7 +215,7 @@ class Test(models.Model):
     # 关联的样品
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE, verbose_name='样品')
     # 测试类型（现在关联到Standard模型）
-    test_type = models.ForeignKey(Standard, on_delete=models.CASCADE, verbose_name='测试类型')
+    test_type = models.ForeignKey('standard.Standard', on_delete=models.CASCADE, verbose_name='测试类型')
     # 测试状态
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
     # 测试结果
@@ -409,9 +365,9 @@ class Project_Order(models.Model):
     # 关联的样品
     samples = models.ManyToManyField(Sample, verbose_name='样品')
     # 关联的测试类型（现在关联到Standard模型）
-    test_types = models.ManyToManyField(Standard, verbose_name='测试类型', related_name='project_order_test_types')
+    test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='project_order_test_types')
     # 关联的标准
-    standards = models.ManyToManyField(Standard, verbose_name='标准', related_name='project_order_standards')
+    standards = models.ManyToManyField('standard.Standard_radiation_hygiene', verbose_name='标准', related_name='project_order_standards')
     
     def save(self, *args, **kwargs):
         """重写save方法，自动生成方案编号"""
@@ -462,9 +418,13 @@ class Report(models.Model):
     # 关联的样品
     samples = models.ManyToManyField(Sample, verbose_name='样品')
     # 关联的测试类型（现在关联到Standard模型）
-    test_types = models.ManyToManyField(Standard, verbose_name='测试类型', related_name='report_test_types')
+    test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='report_test_types')
     # 关联的标准
-    standards = models.ManyToManyField(Standard, verbose_name='标准', related_name='report_standards')
+    standards = models.ManyToManyField('standard.Standard', verbose_name='标准', related_name='report_standards')
+    # 关联的测试结果
+    test_results = models.ManyToManyField(Test, verbose_name='测试结果', related_name='report_test_results')
+    # PDF文件
+    pdf_file = models.FileField(upload_to='report_pdfs/', blank=True, null=True, verbose_name='PDF文件')
     
     def save(self, *args, **kwargs):
         """重写save方法，自动生成报告编号"""

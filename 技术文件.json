@@ -1,0 +1,297 @@
+{
+  "system_info": {
+    "name": "核与辐射安全技术 LIMS 系统",
+    "version": "1.0.0",
+    "description": "基于Django 6.0开发的实验室信息管理系统(LIMS)，专为核与辐射安全技术领域设计",
+    "release_date": "2026-01-29"
+  },
+  "tech_stack": [
+    {"component": "Python", "version": "3.13.0+", "description": "后端编程语言"},
+    {"component": "Django", "version": "6.0+", "description": "Web框架"},
+    {"component": "SQLite", "version": "3", "description": "默认数据库"},
+    {"component": "Bootstrap", "version": "5", "description": "前端UI框架"},
+    {"component": "Chart.js", "version": "4.4.0", "description": "数据可视化库"},
+    {"component": "jQuery", "version": "3.6.0", "description": "JavaScript库"}
+  ],
+  "project_structure": {
+    "core": {
+      "description": "核心应用",
+      "subdirectories": {
+        "migrations": "数据库迁移文件 (19个迁移版本)",
+        "static": "管理后台静态资源",
+        "templates": "前端模板文件 (12个模板)"
+      },
+      "files": [
+        {"name": "admin.py", "description": "管理后台配置"},
+        {"name": "models.py", "description": "数据模型定义 (11个模型)"},
+        {"name": "views.py", "description": "视图函数 (20+个视图)"},
+        {"name": "urls.py", "description": "URL路由配置"}
+      ]
+    },
+    "static": {
+      "description": "全局静态文件",
+      "subdirectories": {
+        "css": "Bootstrap CSS",
+        "js": "Bootstrap JS"
+      }
+    },
+    "senaite_lims": {
+      "description": "项目配置目录",
+      "files": [
+        {"name": "settings.py", "description": "项目设置"},
+        {"name": "urls.py", "description": "主URL配置"},
+        {"name": "wsgi.py", "description": "WSGI部署配置"},
+        {"name": "asgi.py", "description": "ASGI部署配置"}
+      ]
+    }
+  },
+  "data_models": {
+    "Client": {
+      "description": "客户模型",
+      "fields": [
+        {"name": "name", "type": "CharField(255)", "description": "客户名称"},
+        {"name": "contact_person", "type": "CharField(255)", "description": "联系人"},
+        {"name": "email", "type": "EmailField", "description": "电子邮件"},
+        {"name": "phone", "type": "CharField(20)", "description": "电话"},
+        {"name": "address", "type": "TextField", "description": "地址"},
+        {"name": "created_by", "type": "ForeignKey(User)", "description": "创建人"},
+        {"name": "created_at", "type": "DateTimeField", "description": "创建时间"},
+        {"name": "updated_at", "type": "DateTimeField", "description": "更新时间"}
+      ]
+    },
+    "Sample": {
+      "description": "样品模型",
+      "fields": [
+        {"name": "sample_id", "type": "CharField(50)", "description": "样品编号 (自动生成)"},
+        {"name": "client", "type": "ForeignKey(Client)", "description": "关联客户"},
+        {"name": "order", "type": "ForeignKey(Order)", "description": "关联订单"},
+        {"name": "sample_type", "type": "ForeignKey(SampleType)", "description": "样品类型"},
+        {"name": "collection_date", "type": "DateTimeField", "description": "采集日期"},
+        {"name": "received_date", "type": "DateTimeField", "description": "接收日期"},
+        {"name": "status", "type": "CharField(20)", "description": "状态"}
+      ],
+      "status_choices": [
+        {"value": "pending", "label": "待处理"},
+        {"value": "in_progress", "label": "处理中"},
+        {"value": "completed", "label": "已完成"},
+        {"value": "cancelled", "label": "已取消"}
+      ]
+    },
+    "Order": {
+      "description": "订单模型",
+      "fields": [
+        {"name": "order_id", "type": "CharField(50)", "description": "订单编号 (自动生成)"},
+        {"name": "name", "type": "CharField(255)", "description": "订单名称"},
+        {"name": "description", "type": "TextField", "description": "订单描述"},
+        {"name": "client", "type": "ForeignKey(Client)", "description": "关联客户"},
+        {"name": "status", "type": "CharField(20)", "description": "订单状态"}
+      ],
+      "status_choices": [
+        {"value": "pending", "label": "待处理"},
+        {"value": "in_progress", "label": "处理中"},
+        {"value": "completed", "label": "已完成"},
+        {"value": "cancelled", "label": "已取消"}
+      ]
+    },
+    "Test": {
+      "description": "测试记录模型",
+      "fields": [
+        {"name": "sample", "type": "ForeignKey(Sample)", "description": "关联样品"},
+        {"name": "test_type", "type": "ForeignKey(Standard)", "description": "测试类型"},
+        {"name": "status", "type": "CharField(20)", "description": "测试状态"},
+        {"name": "result", "type": "CharField(100)", "description": "测试结果"},
+        {"name": "analyzed_by", "type": "ForeignKey(User)", "description": "分析人员"},
+        {"name": "verified_by", "type": "ForeignKey(User)", "description": "验证人员"}
+      ],
+      "status_choices": [
+        {"value": "pending", "label": "待测试"},
+        {"value": "in_progress", "label": "测试中"},
+        {"value": "completed", "label": "已完成"},
+        {"value": "failed", "label": "测试失败"}
+      ]
+    },
+    "Report": {
+      "description": "报告模型",
+      "fields": [
+        {"name": "report_id", "type": "CharField(50)", "description": "报告编号 (自动生成)"},
+        {"name": "project_order", "type": "ForeignKey(Project_Order)", "description": "关联方案"},
+        {"name": "name", "type": "CharField(255)", "description": "报告名称"},
+        {"name": "client", "type": "ForeignKey(Client)", "description": "关联客户"},
+        {"name": "order", "type": "ForeignKey(Order)", "description": "关联订单"},
+        {"name": "status", "type": "CharField(20)", "description": "报告状态"},
+        {"name": "staff", "type": "ManyToManyField(Staff)", "description": "关联员工"},
+        {"name": "samples", "type": "ManyToManyField(Sample)", "description": "关联样品"}
+      ],
+      "status_choices": [
+        {"value": "pending", "label": "报告编制"},
+        {"value": "in_progress", "label": "报告审核"},
+        {"value": "completed", "label": "报告签发"},
+        {"value": "cancelled", "label": "报告作废"}
+      ]
+    },
+    "Standard": {
+      "description": "标准模型",
+      "fields": [
+        {"name": "standard_id", "type": "CharField(50)", "description": "标准编号"},
+        {"name": "name", "type": "CharField(255)", "description": "标准名称"},
+        {"name": "test_name", "type": "CharField(255)", "description": "测试名称"},
+        {"name": "unit", "type": "CharField(50)", "description": "测试单位"},
+        {"name": "reference_range", "type": "CharField(100)", "description": "参考范围"},
+        {"name": "status", "type": "CharField(20)", "description": "标准状态"}
+      ]
+    },
+    "Staff": {
+      "description": "员工模型",
+      "fields": [
+        {"name": "staff_id", "type": "CharField(50)", "description": "员工编号 (自动生成)"},
+        {"name": "name", "type": "CharField(255)", "description": "员工姓名"},
+        {"name": "department", "type": "ForeignKey(Department)", "description": "部门"},
+        {"name": "email", "type": "EmailField", "description": "电子邮件"},
+        {"name": "phone", "type": "CharField(20)", "description": "电话"},
+        {"name": "address", "type": "TextField", "description": "地址"}
+      ]
+    },
+    "Department": {
+      "description": "部门模型",
+      "fields": [
+        {"name": "name", "type": "CharField(255)", "description": "部门名称"},
+        {"name": "description", "type": "TextField", "description": "部门描述"}
+      ]
+    },
+    "Project_Order": {
+      "description": "方案模型",
+      "fields": [
+        {"name": "project_id", "type": "CharField(50)", "description": "方案编号 (自动生成)"},
+        {"name": "name", "type": "CharField(255)", "description": "方案名称"},
+        {"name": "description", "type": "TextField", "description": "方案描述"},
+        {"name": "client", "type": "ForeignKey(Client)", "description": "关联客户"},
+        {"name": "order", "type": "ForeignKey(Order)", "description": "关联订单"},
+        {"name": "status", "type": "CharField(20)", "description": "方案状态"},
+        {"name": "staff", "type": "ManyToManyField(Staff)", "description": "关联员工"},
+        {"name": "samples", "type": "ManyToManyField(Sample)", "description": "关联样品"},
+        {"name": "test_types", "type": "ManyToManyField(Standard)", "description": "测试类型"},
+        {"name": "standards", "type": "ManyToManyField(Standard)", "description": "关联标准"}
+      ]
+    },
+    "Instrument": {
+      "description": "仪器设备模型",
+      "fields": [
+        {"name": "name", "type": "CharField(255)", "description": "仪器名称"},
+        {"name": "model", "type": "CharField(255)", "description": "仪器型号"},
+        {"name": "serial_number", "type": "CharField(100)", "description": "序列号"},
+        {"name": "location", "type": "CharField(255)", "description": "存放位置"},
+        {"name": "calibration_date", "type": "DateTimeField", "description": "校准日期"},
+        {"name": "next_calibration_date", "type": "DateTimeField", "description": "下次校准日期"}
+      ]
+    },
+    "SampleType": {
+      "description": "样品类型模型",
+      "fields": [
+        {"name": "name", "type": "CharField(255)", "description": "类型名称"},
+        {"name": "description", "type": "TextField", "description": "类型描述"}
+      ]
+    }
+  },
+  "url_routes": [
+    {"path": "/", "view": "home", "description": "首页"},
+    {"path": "/register/", "view": "register", "description": "用户注册"},
+    {"path": "/clients/", "view": "client_list", "description": "客户列表"},
+    {"path": "/clients/<int:pk>/delete/", "view": "client_delete", "description": "删除客户"},
+    {"path": "/samples/", "view": "sample_list", "description": "样品列表"},
+    {"path": "/samples/<int:pk>/delete/", "view": "sample_delete", "description": "删除样品"},
+    {"path": "/orders/", "view": "order_list", "description": "订单列表"},
+    {"path": "/orders/<int:pk>/delete/", "view": "order_delete", "description": "删除订单"},
+    {"path": "/project_orders/", "view": "project_order_list", "description": "方案列表"},
+    {"path": "/project_orders/<int:pk>/", "view": "project_order_detail", "description": "方案详情"},
+    {"path": "/project_orders/<int:pk>/delete/", "view": "project_order_delete", "description": "删除方案"},
+    {"path": "/reports/", "view": "report_list", "description": "报告列表"},
+    {"path": "/reports/<int:pk>/", "view": "report_detail", "description": "报告详情"},
+    {"path": "/reports/<int:pk>/approve/", "view": "report_approve", "description": "报告审核"},
+    {"path": "/reports/<int:pk>/delete/", "view": "report_delete", "description": "删除报告"},
+    {"path": "/standards/", "view": "standard_list", "description": "标准列表"},
+    {"path": "/staff/", "view": "staff_list", "description": "员工列表"},
+    {"path": "/sample/get_orders/", "view": "get_orders", "description": "AJAX获取订单"}
+  ],
+  "permissions": [
+    {"codename": "can_approve_report", "name": "可以审核报告", "description": "审核报告权限"},
+    {"codename": "can_sign_report", "name": "可以签发报告", "description": "签发报告权限"},
+    {"codename": "can_reject_report", "name": "可以拒绝报告", "description": "拒绝报告权限"}
+  ],
+  "user_roles": [
+    {"role": "普通用户", "permissions": "查看和管理基础数据"},
+    {"role": "管理员", "permissions": "所有权限 + 管理后台访问"},
+    {"role": "审核人员", "permissions": "报告审核、签发、拒绝"}
+  ],
+  "id_generation_rules": {
+    "format": "[前缀]-[日期]-[序号]",
+    "example": "SAMPLE-20260303-0001",
+    "entities": [
+      {"entity": "样品", "prefix": "SAMPLE", "example": "SAMPLE-20260303-0001"},
+      {"entity": "订单", "prefix": "ORDER", "example": "ORDER-20260303-0001"},
+      {"entity": "员工", "prefix": "STAFF", "example": "STAFF-20260303-0001"},
+      {"entity": "方案", "prefix": "PROJECT", "example": "PROJECT-20260303-0001"},
+      {"entity": "报告", "prefix": "REPORT", "example": "REPORT-20260303-0001"}
+    ]
+  },
+  "configuration": {
+    "database": {
+      "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "db.sqlite3"
+      }
+    },
+    "static_files": {
+      "STATIC_URL": "static/",
+      "STATICFILES_DIRS": ["static"],
+      "STATIC_ROOT": "collected_static"
+    },
+    "authentication": {
+      "LOGIN_URL": "/login/",
+      "LOGIN_REDIRECT_URL": "/"
+    },
+    "internationalization": {
+      "LANGUAGE_CODE": "en-us",
+      "TIME_ZONE": "UTC",
+      "USE_I18N": true,
+      "USE_TZ": true
+    }
+  },
+  "deployment": {
+    "development": {
+      "steps": [
+        "python -m venv venv",
+        "venv\\Scripts\\activate",
+        "pip install -r requirements.txt",
+        "python manage.py migrate",
+        "python manage.py createsuperuser",
+        "python manage.py runserver"
+      ]
+    },
+    "production_recommendations": [
+      "切换为 MySQL 或 PostgreSQL 数据库",
+      "使用 collectstatic 收集静态文件",
+      "设置 DEBUG = False",
+      "配置 ALLOWED_HOSTS",
+      "使用环境变量管理 SECRET_KEY",
+      "使用 Gunicorn + Nginx",
+      "配置 SSL 证书"
+    ]
+  },
+  "data_visualization": {
+    "charts": [
+      {"name": "样品状态分布饼图", "description": "展示各状态样品数量占比"},
+      {"name": "订单状态分布饼图", "description": "展示各状态订单数量占比"},
+      {"name": "报告状态分布饼图", "description": "展示各状态报告数量占比"}
+    ],
+    "library": "Chart.js 4.4.0",
+    "features": ["响应式布局", "交互式提示"]
+  },
+  "system_features": [
+    {"feature": "自动编号", "description": "样品、订单、员工、方案、报告均支持自动生成唯一编号"},
+    {"feature": "状态管理", "description": "完整的状态流转机制"},
+    {"feature": "权限控制", "description": "基于Django权限系统的细粒度权限管理"},
+    {"feature": "数据可视化", "description": "首页数据统计和图表展示"},
+    {"feature": "响应式设计", "description": "基于Bootstrap 5的响应式UI"},
+    {"feature": "管理后台", "description": "完整的Django Admin后台管理"}
+  ]
+}

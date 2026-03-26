@@ -1,0 +1,67 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript">
+        (function($) {
+            $(document).ready(function() {
+                // 处理标准名称的"其他"选项
+                var nameField = $('#id_name');
+                var nameOtherField = $('<input type="text" id="id_name_other" name="name_other" placeholder="请输入新的标准名称" class="vTextField">');
+                nameField.after(nameOtherField);
+                nameOtherField.hide();
+                
+                // 处理标准类型的"其他"选项
+                var typeField = $('#id_standard_type');
+                var typeOtherField = $('<input type="text" id="id_standard_type_other" name="standard_type_other" placeholder="请输入新的标准类型" class="vTextField">');
+                typeField.after(typeOtherField);
+                typeOtherField.hide();
+                
+                // 处理标准编号的"其他"选项
+                var idField = $('#id_standard_id');
+                var idOtherField = $('<input type="text" id="id_standard_id_other" name="standard_id_other" placeholder="请输入新的标准编号" class="vTextField">');
+                idField.after(idOtherField);
+                idOtherField.hide();
+                
+                // 当选择发生变化时
+                nameField.change(function() {
+                    if ($(this).val() === 'other') {
+                        nameOtherField.show();
+                    } else {
+                        nameOtherField.hide();
+                    }
+                });
+                
+                typeField.change(function() {
+                    if ($(this).val() === 'other') {
+                        typeOtherField.show();
+                    } else {
+                        typeOtherField.hide();
+                    }
+                });
+                
+                idField.change(function() {
+                    if ($(this).val() === 'other') {
+                        idOtherField.show();
+                    } else {
+                        idOtherField.hide();
+                    }
+                });
+                
+                // 初始检查
+                if (nameField.val() === 'other') {
+                    nameOtherField.show();
+                }
+                
+                if (typeField.val() === 'other') {
+                    typeOtherField.show();
+                }
+                
+                if (idField.val() === 'other') {
+                    idOtherField.show();
+                }
+            });
+        })(django.jQuery);
+    </script>
+{% endblock %}

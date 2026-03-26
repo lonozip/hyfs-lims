@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+
+{% block title %}标准库列表{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>标准库列表</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>标准库名称</th>
+                <th>描述</th>
+                <th>创建人</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for library in libraries %}
+            <tr>
+                <td>{{ library.name }}</td>
+                <td>{{ library.description }}</td>
+                <td>{{ library.created_by }}</td>
+                <td>{{ library.created_at }}</td>
+                <td>
+                    <a href="{% url 'standard:library_detail' library.pk %}">查看</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">暂无标准库</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

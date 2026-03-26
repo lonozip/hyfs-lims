@@ -23,8 +23,6 @@ urlpatterns = [
     path('orders/', views.order_list, name='order_list'),
     # 订单删除URL
     path('orders/<int:pk>/delete/', views.order_delete, name='order_delete'),
-    # 标准列表URL
-    path('standards/', views.standard_list, name='standard_list'),
     # 员工列表URL
     path('staff/', views.staff_list, name='staff_list'),
     # 项目方案列表URL
@@ -39,9 +37,13 @@ urlpatterns = [
     path('reports/<int:pk>/', views.report_detail, name='report_detail'),
     # 报告审核URL
     path('reports/<int:pk>/approve/', views.report_approve, name='report_approve'),
+    # 报告生成PDF URL
+    path('reports/<int:pk>/generate_pdf/', views.generate_pdf_report, name='generate_pdf_report'),
     # 报告删除URL
     path('reports/<int:pk>/delete/', views.report_delete, name='report_delete'),
+    # 标准管理URL
+    path('standard/', views.standard_list, name='standard_list'),
     # 获取订单的AJAX URL
     path('sample/get_orders/', views.get_orders, name='get_orders'),
-
+    
 ]

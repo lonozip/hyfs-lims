@@ -4,39 +4,148 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">标准管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/standard/add/" class="btn btn-primary">
+            <a href="/admin/standard/standard/add/" class="btn btn-primary">
                 添加标准
+            </a>
+            <a href="/admin/standard/standardlibrary/add/" class="btn btn-secondary ml-2">
+                添加标准库
             </a>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-sm">
-            <thead>
-                <tr>
-                    <th>标准名称</th>
-                    <th>标准类型</th>
-                    <th>标准编号</th>
-                    <th>状态</th>
-                    <th>创建时间</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for standard in standards %}
-                <tr>
-                    <td>{{ standard.name }}</td>
-                    <td>{{ standard.standard_type }}</td>
-                    <td>{{ standard.standard_id }}</td>
-                    <td>{{ standard.get_status_display }}</td>
-                    <td>{{ standard.created_at|date:"Y-m-d H:i" }}</td>
-                    <td>
-                        <a href="/admin/core/standard/{{ standard.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
-                        <a href="/admin/core/standard/{{ standard.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- 导航选项卡 -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" href="#standard-list" data-toggle="tab">备用标准列表</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#library-list" data-toggle="tab">标准库列表</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#radiation-hygiene-list" data-toggle="tab">放射卫生标准</a>
+        </li>
+    </ul>
+
+    <!-- 内容区域 -->
+    <div class="tab-content">
+        <!-- 标准列表 -->
+        <div class="tab-pane fade show active" id="standard-list">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>标准编号</th>
+                            <th>标准库</th>
+                            <th>标准名称</th>
+                            <th>标准类型</th>
+                            <th>测试单位</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for standard in standards %}
+                        <tr>
+                            <td>{{ standard.standard_id }}</td>
+                            <td>{{ standard.library.name|default:"未关联" }}</td>
+                            <td>{{ standard.name }}</td>
+                            <td>{{ standard.standard_type }}</td>
+                            <td>{{ standard.unit }}</td>
+                            <td>{{ standard.get_status_display }}</td>
+                            <td>
+                                <a href="/admin/standard/standard/{{ standard.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                                <a href="/admin/standard/standard/{{ standard.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">暂无标准</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 标准库列表 -->
+        <div class="tab-pane fade" id="library-list">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>标准库名称</th>
+                            <th>描述</th>
+                            <th>创建人</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for library in libraries %}
+                        <tr>
+                            <td>{{ library.name }}</td>
+                            <td>{{ library.description }}</td>
+                            <td>{{ library.created_by }}</td>
+                            <td>{{ library.created_at }}</td>
+                            <td>
+                                <a href="/admin/standard/standardlibrary/{{ library.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                                <a href="/admin/standard/standardlibrary/{{ library.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">暂无标准库</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 放射卫生标准列表 -->
+        <div class="tab-pane fade" id="radiation-hygiene-list">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>标准编号</th>
+                            <th>标准库</th>
+                            <th>标准名称</th>
+                            <th>标准类型</th>
+                            <th>测试名称</th>
+                            <th>测试单位</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for standard in radiation_hygiene %}
+                        <tr>
+                            <td>{{ standard.standard_id }}</td>
+                            <td>{{ standard.library.name|default:"未关联" }}</td>
+                            <td>{{ standard.name }}</td>
+                            <td>{{ standard.standard_type }}</td>
+                            <td>{{ standard.test_name }}</td>
+                            <td>{{ standard.unit }}</td>
+                            <td>{{ standard.get_status_display }}</td>
+                            <td>
+
+                                <a href="/admin/standard/standard_radiation_hygiene/{{ standard.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                                <a href="/admin/standard/standard_radiation_hygiene/{{ standard.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">暂无放射卫生标准</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
+    <!-- Bootstrap 4 所需的 JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

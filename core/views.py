@@ -5,9 +5,11 @@ from django.contrib.auth.decorators import login_required
 # 导入请求方法装饰器
 from django.views.decorators.http import require_GET
 # 导入JSON响应模块
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 # 导入模型
-from .models import Client, Sample, Test, Order, Standard, Staff, Project_Order, Report, Department
+from .models import Client, Sample, Test, Order, Staff, Project_Order, Report, Department
+# 导入standard应用的模型
+from standard.models import Standard, StandardLibrary, Standard_radiation_hygiene
 
 # 导入消息框架
 from django.contrib import messages
@@ -16,6 +18,14 @@ from django.db.models import Count
 # 导入JSON模块
 import json
 # 导入用户模型和认证相关功能
+from django.contrib.auth.models import User
+# 导入模板渲染函数
+from django.template.loader import render_to_string
+# 导入PDF生成库
+from weasyprint import HTML
+# 导入临时文件和操作系统模块
+import tempfile
+import os
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 
@@ -160,14 +170,6 @@ def order_list(request):
     return render(request, 'core/order_list.html', {'orders': orders})
     
 
-# 标准列表视图函数
-@login_required
-def standard_list(request):
-    """标准列表视图函数"""
-    # 获取所有标准
-    standards = Standard.objects.all()
-    # 渲染标准列表模板
-    return render(request, 'core/standard.html', {'standards': standards})
 
 
 # 员工列表视图函数
@@ -230,6 +232,11 @@ def report_detail(request, pk):
     project_order = report.project_order
     # 获取该方案关联的所有样品
     samples = project_order.samples.all() if project_order else []
+    # 获取该报告关联的所有测试结果
+    try:
+        test_results = report.test_results.all()
+    except AttributeError:
+        test_results = []
     # 获取该方案关联的所有测试类型
     test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
@@ -240,8 +247,58 @@ def report_detail(request, pk):
         'project_order': project_order,
         'samples': samples,
         'test_types': test_types,
-        'standards': standards
+        'standards': standards,
+        'test_results': test_results
     })
+
+
+def generate_pdf_report(request, pk):
+    """生成PDF报告视图函数"""
+    # 获取指定ID的报告，不存在则返回404
+    report = get_object_or_404(Report, pk=pk)
+    # 获取报告关联的方案
+    project_order = report.project_order
+    # 获取该方案关联的所有样品
+    samples = project_order.samples.all() if project_order else []
+    # 获取该报告关联的所有测试结果
+    try:
+        test_results = report.test_results.all()
+    except AttributeError:
+        test_results = []
+    # 获取该方案关联的所有测试类型
+    test_types = project_order.test_types.all() if project_order else []
+    # 获取该方案关联的所有标准
+    standards = project_order.standards.all() if project_order else []
+    
+    # 渲染HTML模板
+    html_string = render_to_string('core/report_pdf.html', {
+        'report': report,
+        'project_order': project_order,
+        'samples': samples,
+        'test_types': test_types,
+        'standards': standards,
+        'test_results': test_results
+    })
+    
+    # 生成PDF
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+    
+    # 创建临时文件
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        temp_file.write(pdf)
+        temp_file_path = temp_file.name
+    
+    # 保存PDF文件到报告模型
+    with open(temp_file_path, 'rb') as f:
+        report.pdf_file.save(f'{report.report_id}.pdf', f)
+    
+    # 删除临时文件
+    os.unlink(temp_file_path)
+    
+    # 显示成功消息
+    messages.success(request, 'PDF报告生成成功！')
+    return redirect('report_detail', pk=pk)
 
 
 @login_required
@@ -266,6 +323,8 @@ def report_approve(request, pk):
             # 签发报告，更新报告状态为报告签发
             report.status = 'completed'
             messages.success(request, '报告已签发！')
+            # 生成PDF报告
+            generate_pdf_report(request, pk)
         elif action == 'reject':
             # 拒绝报告，更新报告状态为报告编制
             report.status = 'pending'
@@ -276,6 +335,7 @@ def report_approve(request, pk):
         
     # 重定向回报告详情页
     return redirect('report_detail', pk=pk)
+
 
 @login_required
 def department_list(request):
@@ -343,3 +403,16 @@ def get_orders(request):
     orders_list = [{'id': order.id, 'name': order.name, 'order_id': order.order_id} for order in orders]
     
     return JsonResponse({'orders': orders_list})
+
+
+@login_required
+def standard_list(request):
+    """标准管理视图函数"""
+    # 获取所有标准
+    standards = Standard.objects.all()
+    # 获取所有标准库
+    libraries = StandardLibrary.objects.all()
+    # 获取所有放射卫生标准
+    radiation_hygiene = Standard_radiation_hygiene.objects.all()
+    # 渲染标准管理模板
+    return render(request, 'core/standard.html', {'standards': standards, 'libraries': libraries, 'radiation_hygiene': radiation_hygiene})

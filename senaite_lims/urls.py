@@ -24,11 +24,16 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('standard/', include('standard.urls')),
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 ]
 
-# 在开发模式下添加静态文件的URL配置
+# 在开发模式下添加静态文件和媒体文件的URL配置
 # 在Django开发模式下，不需要单独配置静态文件URL，Django会自动处理
 # if settings.DEBUG:
 #     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# 添加媒体文件 URL 映射
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

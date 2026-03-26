@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report.report_id }} - {{ report.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .info-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            width: 150px;
+            font-weight: bold;
+        }
+        .info-value {
+            flex: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>报告详情</h1>
+    
+    <!-- 基本信息 -->
+    <h2>基本信息</h2>
+    <div class="info-box">
+        <div class="info-row">
+            <div class="info-label">方案ID:</div>
+            <div class="info-value">{{ project_order.project_id }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">方案名称:</div>
+            <div class="info-value">{{ project_order.name }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">客户:</div>
+            <div class="info-value">{{ project_order.client.name }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">订单编号:</div>
+            <div class="info-value">{{ project_order.order.order_id }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">方案状态:</div>
+            <div class="info-value">{{ project_order.get_status_display }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">报告编号:</div>
+            <div class="info-value">{{ report.report_id }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">报告名称:</div>
+            <div class="info-value">{{ report.name }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">报告状态:</div>
+            <div class="info-value">{{ report.get_status_display }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">方案描述:</div>
+            <div class="info-value">{{ project_order.description }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">创建人:</div>
+            <div class="info-value">{{ report.created_by.username }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">创建时间:</div>
+            <div class="info-value">{{ report.created_at|date:"Y-m-d H:i:s" }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">更新时间:</div>
+            <div class="info-value">{{ report.updated_at|date:"Y-m-d H:i:s" }}</div>
+        </div>
+    </div>
+    
+    <!-- 样品信息 -->
+    <h2>样品信息</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>样品编号</th>
+                <th>客户</th>
+                <th>订单编号</th>
+                <th>样品类型</th>
+                <th>采集日期</th>
+                <th>接收日期</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sample in samples %}
+                <tr>
+                    <td>{{ sample.sample_id }}</td>
+                    <td>{{ sample.client.name }}</td>
+                    <td>{{ sample.order.order_id }}</td>
+                    <td>{{ sample.sample_type.name }}</td>
+                    <td>{{ sample.collection_date|date:"Y-m-d" }}</td>
+                    <td>{{ sample.received_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ sample.get_status_display }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 测试类型 -->
+    <h2>测试类型</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>测试名称</th>
+                <th>单位</th>
+                <th>参考范围</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test_type in test_types %}
+                <tr>
+                    <td>{{ test_type.test_name }}</td>
+                    <td>{{ test_type.unit }}</td>
+                    <td>{{ test_type.reference_range }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 关联标准 -->
+    <h2>关联标准</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>标准编号</th>
+                <th>标准名称</th>
+                <th>标准类型</th>
+                <th>发布日期</th>
+                <th>实施日期</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for standard in standards %}
+                <tr>
+                    <td>{{ standard.standard_code }}</td>
+                    <td>{{ standard.standard_name }}</td>
+                    <td>{{ standard.standard_type }}</td>
+                    <td>{{ standard.issue_date|date:"Y-m-d" }}</td>
+                    <td>{{ standard.implementation_date|date:"Y-m-d" }}</td>
+                    <td>{{ standard.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 测试结果 -->
+    <h2>测试结果</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>测试ID</th>
+                <th>测试名称</th>
+                <th>样品</th>
+                <th>测试值</th>
+                <th>单位</th>
+                <th>测试日期</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test in test_results %}
+                <tr>
+                    <td>{{ test.id }}</td>
+                    <td>{{ test.test_type.test_name }}</td>
+                    <td>{{ test.sample.sample_id }}</td>
+                    <td>{{ test.result }}</td>
+                    <td>{{ test.test_type.unit }}</td>
+                    <td>{{ test.analysis_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ test.get_status_display }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

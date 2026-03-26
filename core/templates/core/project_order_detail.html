@@ -148,6 +148,11 @@
                                     <li class="list-group-item">
                                         <strong>{{ standard.standard_id }}</strong> - {{ standard.name }}
                                         <br><small>类型: {{ standard.standard_type }}</small>
+                                        <br><small>测试名称: {{ standard.test_name }}</small>
+                                        <br><small>单位: {{ standard.unit }}</small>
+                                        <br><small>验收检测参考范围: {{ standard.acceptance_reference_range }}</small>
+                                        <br><small>状态检测参考范围: {{ standard.status_reference_range }}</small>
+                                        <br><small>稳定性检测参考范围: {{ standard.stability_reference_range }}</small>
                                         <br><small>状态: 
                                             {% if standard.status == 'pending' %}待实行
                                             {% elif standard.status == 'in_progress' %}试行中

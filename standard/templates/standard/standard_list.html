@@ -1,0 +1,41 @@
+{% extends 'core/base.html' %}
+
+{% block title %}标准列表{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>标准列表</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>标准编号</th>
+                <th>标准库</th>
+                <th>标准名称</th>
+                <th>标准类型</th>
+                <th>测试单位</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for standard in standards %}
+            <tr>
+                <td>{{ standard.standard_id }}</td>
+                <td>{{ standard.library.name|default:"未关联" }}</td>
+                <td>{{ standard.name }}</td>
+                <td>{{ standard.standard_type }}</td>
+                <td>{{ standard.unit }}</td>
+                <td>{{ standard.get_status_display }}</td>
+                <td>
+                    <a href="{% url 'standard:standard_detail' standard.pk %}">查看</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">暂无标准</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

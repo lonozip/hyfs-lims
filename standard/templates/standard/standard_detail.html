@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ standard.standard_id }} - 标准详情{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>标准详情</h2>
+    
+    <table class="table">
+        <tr>
+            <th>标准编号:</th>
+            <td>{{ standard.standard_id }}</td>
+        </tr>
+        <tr>
+            <th>标准库:</th>
+            <td>{{ standard.library.name|default:"未关联" }}</td>
+        </tr>
+        <tr>
+            <th>标准名称:</th>
+            <td>{{ standard.name }}</td>
+        </tr>
+        <tr>
+            <th>标准类型:</th>
+            <td>{{ standard.standard_type }}</td>
+        </tr>
+        <tr>
+            <th>测试名称:</th>
+            <td>{{ standard.test_name }}</td>
+        </tr>
+        <tr>
+            <th>测试单位:</th>
+            <td>{{ standard.unit }}</td>
+        </tr>
+        <tr>
+            <th>验收检测参考范围:</th>
+            <td>{{ standard.acceptance_reference_range }}</td>
+        </tr>
+        <tr>
+            <th>状态检测参考范围:</th>
+            <td>{{ standard.status_reference_range }}</td>
+        </tr>
+        <tr>
+            <th>稳定性检测参考范围:</th>
+            <td>{{ standard.stability_reference_range }}</td>
+        </tr>
+        <tr>
+            <th>采集日期:</th>
+            <td>{{ standard.collection_date }}</td>
+        </tr>
+        <tr>
+            <th>状态:</th>
+            <td>{{ standard.get_status_display }}</td>
+        </tr>
+        <tr>
+            <th>创建人:</th>
+            <td>{{ standard.created_by }}</td>
+        </tr>
+        <tr>
+            <th>创建时间:</th>
+            <td>{{ standard.created_at }}</td>
+        </tr>
+        <tr>
+            <th>更新时间:</th>
+            <td>{{ standard.updated_at }}</td>
+        </tr>
+    </table>
+    
+    <a href="{% url 'standard:standard_list' %}">返回标准列表</a>
+</div>
+{% endblock %}

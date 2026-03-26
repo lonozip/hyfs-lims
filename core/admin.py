@@ -1,7 +1,7 @@
 # 导入Django admin模块
 from django.contrib import admin
 # 导入所有模型
-from .models import Client, Order, Sample, SampleType, Test, Instrument, Standard, Staff, Project_Order, Report, Department
+from .models import Client, Order, Sample, SampleType, Test, Instrument, Staff, Project_Order, Report, Department
 
 class ClientAdmin(admin.ModelAdmin):
     """客户模型的Admin配置"""
@@ -92,18 +92,7 @@ class ReportAdmin(admin.ModelAdmin):
     # 只读字段
     readonly_fields = ('report_id',)
     # 多对多字段显示为并排选择列表
-    filter_horizontal = ('staff', 'samples', 'test_types', 'standards')
-
-
-
-class StandardAdmin(admin.ModelAdmin):
-    """标准模型的Admin配置 - 合并了测试类型的功能"""
-    # 列表页面显示的字段
-    list_display = ('standard_id', 'standard_type', 'test_name', 'unit', 'reference_range', 'status', 'collection_date', 'created_at', 'updated_at')
-    # 列表过滤器
-    list_filter = ('status', 'standard_type')
-    # 搜索字段
-    search_fields = ('standard_id', 'standard_type', 'test_name', 'name')
+    filter_horizontal = ('staff', 'samples', 'test_results', 'test_types', 'standards')
 
 
 class StaffAdmin(admin.ModelAdmin):
@@ -149,11 +138,10 @@ admin.site.register(SampleType, SampleTypeAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Sample, SampleAdmin)
 admin.site.register(Department, DepartmentAdmin)
+admin.site.register(Test, TestAdmin)
 # TestType模型已合并到Standard模型中，不再需要单独注册
 # admin.site.register(TestType, TestTypeAdmin)
-admin.site.register(Test, TestAdmin)
 admin.site.register(Instrument, InstrumentAdmin)
-admin.site.register(Standard, StandardAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Project_Order, ProjectOrderAdmin)
 admin.site.register(Report, ReportAdmin)
