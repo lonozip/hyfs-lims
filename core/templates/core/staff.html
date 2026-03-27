@@ -4,8 +4,8 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">人员管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/staff/add/" class="btn btn-primary">
-                添加人员
+            <a href="{% url 'staff_create' %}" class="btn btn-primary">
+                添加员工
             </a>
         </div>
     </div>
@@ -16,10 +16,11 @@
                 <tr>
                     <th>人员名称</th>
                     <th>部门</th>
-                    <th>电子邮件</th>
-                    <th>电话</th>
-                    <th>地址</th>
-                    <th>创建时间</th>
+                <th>职务</th>
+                <th>电子邮件</th>
+                <th>电话</th>
+                <th>地址</th>
+                <th>创建时间</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -28,12 +29,13 @@
                 <tr>
                     <td>{{ staff.name }}</td>
                     <td>{{ staff.department }}</td>
+                    <td>{{ staff.position|default:"未设置" }}</td>
                     <td>{{ staff.email }}</td>
                     <td>{{ staff.phone }}</td>
                     <td>{{ staff.address }}</td>
                     <td>{{ staff.created_at|date:"Y-m-d H:i" }}</td>
                     <td>
-                        <a href="/admin/core/staff/{{ staff.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <a href="{% url 'staff_edit' staff.id %}" class="btn btn-sm btn-primary">编辑</a>
                         <a href="/admin/core/staff/{{ staff.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
                     </td>
                 </tr>

@@ -4,7 +4,14 @@
 
 {% block content %}
 <div class="container">
-    <h2>标准列表</h2>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h2>标准列表</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'standard:standard_create' %}" class="btn btn-primary">
+                添加标准
+            </a>
+        </div>
+    </div>
     <table class="table">
         <thead>
             <tr>
@@ -27,7 +34,8 @@
                 <td>{{ standard.unit }}</td>
                 <td>{{ standard.get_status_display }}</td>
                 <td>
-                    <a href="{% url 'standard:standard_detail' standard.pk %}">查看</a>
+                    <a href="{% url 'standard:standard_detail' standard.pk %}" class="btn btn-sm btn-info">查看</a>
+                    <a href="{% url 'standard:standard_edit' standard.pk %}" class="btn btn-sm btn-primary">编辑</a>
                 </td>
             </tr>
             {% empty %}

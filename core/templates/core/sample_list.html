@@ -4,8 +4,8 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">样本管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/sample/add/" class="btn btn-primary">
-                添加样本
+            <a href="{% url 'sample_create' %}" class="btn btn-primary">
+                添加样品
             </a>
         </div>
     </div>
@@ -45,7 +45,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/admin/core/sample/{{ sample.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <a href="{% url 'sample_edit' sample.id %}" class="btn btn-sm btn-primary">编辑</a>
                         <form action="{% url 'sample_delete' sample.id %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个样品吗？');">删除</button>

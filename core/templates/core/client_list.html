@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">客户管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/client/add/" class="btn btn-primary">
+            <a href="{% url 'client_create' %}" class="btn btn-primary">
                 添加客户
             </a>
         </div>
@@ -29,7 +29,7 @@
                     <td>{{ client.email }}</td>
                     <td>{{ client.phone }}</td>
                     <td>
-                        <a href="/admin/core/client/{{ client.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <a href="{% url 'client_edit' client.id %}" class="btn btn-sm btn-primary">编辑</a>
                         <form action="{% url 'client_delete' client.id %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个客户吗？');">删除</button>

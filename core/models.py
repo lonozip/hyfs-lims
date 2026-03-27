@@ -310,6 +310,8 @@ class Staff(models.Model):
     phone = models.CharField(max_length=20, verbose_name='电话')
     # 地址
     address = models.TextField(verbose_name='地址')
+    # 职务
+    position = models.CharField(max_length=255, default='', verbose_name='职务')
     # 创建人
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
     # 创建时间
@@ -420,7 +422,7 @@ class Report(models.Model):
     # 关联的测试类型（现在关联到Standard模型）
     test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='report_test_types')
     # 关联的标准
-    standards = models.ManyToManyField('standard.Standard', verbose_name='标准', related_name='report_standards')
+    standards = models.ManyToManyField('standard.Standard_radiation_hygiene', verbose_name='标准', related_name='report_standards')
     # 关联的测试结果
     test_results = models.ManyToManyField(Test, verbose_name='测试结果', related_name='report_test_results')
     # PDF文件

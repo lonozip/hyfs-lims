@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">报告管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/report/add/" class="btn btn-primary">
+            <a href="{% url 'report_create' %}" class="btn btn-primary">
                 添加报告
             </a>
         </div>
@@ -59,7 +59,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/admin/core/report/{{ report.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <a href="{% url 'report_edit' report.id %}" class="btn btn-sm btn-primary">编辑</a>
                         <form action="{% url 'report_delete' report.id %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个报告吗？');">删除</button>

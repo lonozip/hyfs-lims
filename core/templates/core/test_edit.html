@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+
+{% block title %}编辑测试{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">编辑测试</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="sample" class="form-label">样品</label>
+                        <select class="form-select" id="sample" name="sample" required>
+                            {% for sample in samples %}
+                                <option value="{{ sample.id }}" {% if sample.id == test.sample.id %}selected{% endif %}>{{ sample.sample_id }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="test_type" class="form-label">测试类型</label>
+                        <select class="form-select" id="test_type" name="test_type" required>
+                            {% for standard in standards %}
+                                <option value="{{ standard.id }}" {% if standard.id == test.test_type.id %}selected{% endif %}>{{ standard.standard_id }} - {{ standard.test_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">状态</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if test.status == 'pending' %}selected{% endif %}>待测试</option>
+                            <option value="in_progress" {% if test.status == 'in_progress' %}selected{% endif %}>测试中</option>
+                            <option value="completed" {% if test.status == 'completed' %}selected{% endif %}>已完成</option>
+                            <option value="failed" {% if test.status == 'failed' %}selected{% endif %}>测试失败</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="result" class="form-label">测试结果</label>
+                        <input type="text" class="form-control" id="result" name="result" value="{{ test.result }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="analyzed_by" class="form-label">分析人员</label>
+                        <select class="form-select" id="analyzed_by" name="analyzed_by">
+                            <option value="">请选择</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if test.analyzed_by and user.id == test.analyzed_by.id %}selected{% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="analysis_date" class="form-label">分析日期</label>
+                        <input type="datetime-local" class="form-control" id="analysis_date" name="analysis_date" value="{{ test.analysis_date|date:'Y-m-d\TH:i' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="verified_by" class="form-label">验证人员</label>
+                        <select class="form-select" id="verified_by" name="verified_by">
+                            <option value="">请选择</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if test.verified_by and user.id == test.verified_by.id %}selected{% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="verification_date" class="form-label">验证日期</label>
+                        <input type="datetime-local" class="form-control" id="verification_date" name="verification_date" value="{{ test.verification_date|date:'Y-m-d\TH:i' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'test_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

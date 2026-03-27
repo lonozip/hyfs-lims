@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block title %}编辑订单{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">编辑订单</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">订单名称</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ order.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">订单描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ order.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="client" class="form-label">客户</label>
+                        <select class="form-select" id="client" name="client" required>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">订单状态</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>待处理</option>
+                            <option value="in_progress" {% if order.status == 'in_progress' %}selected{% endif %}>处理中</option>
+                            <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>已完成</option>
+                            <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>已取消</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'order_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

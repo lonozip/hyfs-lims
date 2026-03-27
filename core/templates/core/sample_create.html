@@ -1,0 +1,50 @@
+{% extends 'core/base.html' %}
+
+{% block title %}添加样品{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">添加样品</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="client" class="form-label">客户</label>
+                        <select class="form-select" id="client" name="client" required>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="order" class="form-label">订单</label>
+                        <select class="form-select" id="order" name="order" required>
+                            {% for order in orders %}
+                                <option value="{{ order.id }}">{{ order.order_id }} - {{ order.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sample_type" class="form-label">样品类型</label>
+                        <select class="form-select" id="sample_type" name="sample_type">
+                            <option value="">请选择</option>
+                            {% for sample_type in sample_types %}
+                                <option value="{{ sample_type.id }}">{{ sample_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="collection_date" class="form-label">采集日期</label>
+                        <input type="datetime-local" class="form-control" id="collection_date" name="collection_date" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'sample_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

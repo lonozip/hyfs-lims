@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+
+{% block title %}编辑员工{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">编辑员工</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">员工姓名</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ staff.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">部门</label>
+                        <select class="form-select" id="department" name="department" required>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}" {% if department.id == staff.department.id %}selected{% endif %}>{{ department.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="position" class="form-label">职务</label>
+                        <input type="text" class="form-control" id="position" name="position" value="{{ staff.position }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">电子邮件</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ staff.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">电话</label>
+                        <input type="text" class="form-control" id="phone" name="phone" value="{{ staff.phone }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">地址</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required>{{ staff.address }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'staff_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

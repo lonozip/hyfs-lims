@@ -1,0 +1,71 @@
+{% extends 'core/base.html' %}
+
+{% block title %}编辑标准{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">编辑标准</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="library" class="form-label">标准库</label>
+                        <select class="form-select" id="library" name="library">
+                            <option value="">请选择</option>
+                            {% for library in libraries %}
+                                <option value="{{ library.id }}" {% if standard.library and library.id == standard.library.id %}selected{% endif %}>{{ library.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">标准名称</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ standard.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="test_name" class="form-label">测试名称</label>
+                        <input type="text" class="form-control" id="test_name" name="test_name" value="{{ standard.test_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">测试描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ standard.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="unit" class="form-label">测试单位</label>
+                        <input type="text" class="form-control" id="unit" name="unit" value="{{ standard.unit }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="acceptance_reference_range" class="form-label">参考范围</label>
+                        <input type="text" class="form-control" id="acceptance_reference_range" name="acceptance_reference_range" value="{{ standard.acceptance_reference_range }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="standard_type" class="form-label">标准类型</label>
+                        <input type="text" class="form-control" id="standard_type" name="standard_type" value="{{ standard.standard_type }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="standard_id" class="form-label">标准编号</label>
+                        <input type="text" class="form-control" id="standard_id" name="standard_id" value="{{ standard.standard_id }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="collection_date" class="form-label">采集日期</label>
+                        <input type="datetime-local" class="form-control" id="collection_date" name="collection_date" value="{{ standard.collection_date|date:'Y-m-d\TH:i' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">状态</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="pending" {% if standard.status == 'pending' %}selected{% endif %}>待实行</option>
+                            <option value="in_progress" {% if standard.status == 'in_progress' %}selected{% endif %}>试行中</option>
+                            <option value="completed" {% if standard.status == 'completed' %}selected{% endif %}>已实行</option>
+                            <option value="cancelled" {% if standard.status == 'cancelled' %}selected{% endif %}>已取消</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'standard:standard_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

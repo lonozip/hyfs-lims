@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">测试管理</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/test/add/" class="btn btn-primary">
+            <a href="{% url 'test_create' %}" class="btn btn-primary">
                 添加测试
             </a>
         </div>
@@ -47,7 +47,7 @@
                     <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
                     <td>{{ test.verification_date|date:"Y-m-d H:i"|default:"-" }}</td>
                     <td>
-                        <a href="/admin/core/test/{{ test.id }}/change/" class="btn btn-sm btn-primary">编辑</a>
+                        <a href="{% url 'test_edit' test.id %}" class="btn btn-sm btn-primary">编辑</a>
                         <a href="/admin/core/test/{{ test.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
                     </td>
                 </tr>

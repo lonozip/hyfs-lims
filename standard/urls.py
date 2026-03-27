@@ -7,5 +7,7 @@ urlpatterns = [
     path('libraries/', views.standard_library_list, name='library_list'),
     path('libraries/<int:pk>/', views.standard_library_detail, name='library_detail'),
     path('', views.standard_list, name='standard_list'),
+    path('create/', views.standard_create, name='standard_create'),
+    path('<int:pk>/edit/', views.standard_edit, name='standard_edit'),
     path('<int:pk>/', views.standard_detail, name='standard_detail'),
 ]

@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">方案详情</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/project_order/{{ project_order.id }}/change/" class="btn btn-primary">
+            <a href="{% url 'project_order_edit' project_order.id %}" class="btn btn-primary">
                 编辑方案
             </a>
             <a href="{% url 'project_order_list' %}" class="btn btn-secondary ml-2">
