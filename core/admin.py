@@ -1,7 +1,7 @@
 # 导入Django admin模块
 from django.contrib import admin
 # 导入所有模型
-from .models import Client, Order, Sample, SampleType, Test, Instrument, Staff, Project_Order, Report, Department
+from .models import Client, Order, Sample, SampleType, Test, Instrument, Staff, Project_Order, Report, Department, Position
 
 class ClientAdmin(admin.ModelAdmin):
     """客户模型的Admin配置"""
@@ -95,53 +95,39 @@ class ReportAdmin(admin.ModelAdmin):
     filter_horizontal = ('staff', 'samples', 'test_results', 'test_types', 'standards')
 
 
+class PositionAdmin(admin.ModelAdmin):
+    """职务模型的Admin配置"""
+    list_display = ('name', 'description', 'created_at')
+    search_fields = ('name',)
+
 class StaffAdmin(admin.ModelAdmin):
     """员工模型的Admin配置"""
-    # 列表页面显示的字段
-    list_display = ('staff_id', 'name', 'department', 'email', 'phone', 'address', 'created_by', 'created_at', 'updated_at')
-    # 搜索字段
-    search_fields = ('name', 'department', 'email', 'phone', 'staff_id')
-    # 列表过滤器
-    list_filter = ('department',)
-    # 只读字段
-    readonly_fields = ('staff_id',)
+    list_display = ('name', 'staff_id', 'department', 'position_link', 'phone', 'email')
+    search_fields = ('name', 'staff_id', 'phone', 'email')
+    list_filter = ('department', 'position_link')
 
-class ProjectOrderAdmin(admin.ModelAdmin):
+class Project_OrderAdmin(admin.ModelAdmin):
     """方案模型的Admin配置"""
-    # 列表页面显示的字段
-    list_display = ('project_id', 'name', 'client', 'order', 'status', 'created_at', 'updated_at', 'created_by')
-    # 列表过滤器
+    list_display = ('project_id', 'name', 'client', 'order', 'status')
+    search_fields = ('project_id', 'name', 'client__name', 'order__order_id')
     list_filter = ('status', 'client')
-    # 搜索字段
-    search_fields = ('project_id', 'name', 'client__name')
-    # 只读字段
     readonly_fields = ('project_id',)
-    # 多对多字段显示为并排选择列表
-    filter_horizontal = ('staff', 'samples', 'test_types', 'standards')
-    # 添加媒体资源
-    class Media:
-        js = ('https://code.jquery.com/jquery-3.6.0.min.js', '/static/core/admin/js/filter_orders.js')
-
+    filter_horizontal = ('staff', 'sample_types', 'sample_type_descriptions', 'test_types', 'standards')
 
 class DepartmentAdmin(admin.ModelAdmin):
     """部门模型的Admin配置"""
-    # 列表页面显示的字段
-    list_display = ('name', 'description', 'created_by')
-    # 搜索字段
-    search_fields = ('name', 'description')
-    # 只读字段
-    # readonly_fields = ('created_by',)
+    list_display = ('name', 'description')
+    search_fields = ('name',)
 
-# 注册模型到admin后台
+# 注册所有模型
 admin.site.register(Client, ClientAdmin)
-admin.site.register(SampleType, SampleTypeAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Sample, SampleAdmin)
-admin.site.register(Department, DepartmentAdmin)
+admin.site.register(SampleType, SampleTypeAdmin)
 admin.site.register(Test, TestAdmin)
-# TestType模型已合并到Standard模型中，不再需要单独注册
-# admin.site.register(TestType, TestTypeAdmin)
 admin.site.register(Instrument, InstrumentAdmin)
 admin.site.register(Staff, StaffAdmin)
-admin.site.register(Project_Order, ProjectOrderAdmin)
+admin.site.register(Project_Order, Project_OrderAdmin)
 admin.site.register(Report, ReportAdmin)
+admin.site.register(Department, DepartmentAdmin)
+admin.site.register(Position, PositionAdmin)

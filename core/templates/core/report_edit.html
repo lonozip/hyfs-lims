@@ -9,133 +9,240 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-12">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="project_order" class="form-label">关联的方案</label>
-                        <select class="form-select" id="project_order" name="project_order">
-                            <option value="">请选择</option>
-                            {% for project_order in project_orders %}
-                                <option value="{{ project_order.id }}" {% if report.project_order and project_order.id == report.project_order.id %}selected{% endif %}>{{ project_order.project_id }} - {{ project_order.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">报告名称</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ report.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">报告描述</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ report.description }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="client" class="form-label">客户</label>
-                        <select class="form-select" id="client" name="client" required>
-                            {% for client in clients %}
-                                <option value="{{ client.id }}" {% if client.id == report.client.id %}selected{% endif %}>{{ client.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="order" class="form-label">订单</label>
-                        <select class="form-select" id="order" name="order" required>
-                            {% for order in orders %}
-                                <option value="{{ order.id }}" {% if order.id == report.order.id %}selected{% endif %}>{{ order.order_id }} - {{ order.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">报告状态</label>
-                        <select class="form-select" id="status" name="status" required>
-                            <option value="pending" {% if report.status == 'pending' %}selected{% endif %}>报告编制</option>
-                            <option value="in_progress" {% if report.status == 'in_progress' %}selected{% endif %}>报告审核</option>
-                            <option value="completed" {% if report.status == 'completed' %}selected{% endif %}>报告签发</option>
-                            <option value="cancelled" {% if report.status == 'cancelled' %}selected{% endif %}>报告作废</option>
-                        </select>
-                    </div>
                     
-                    <h5 class="mt-4"></h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">员工</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for staff in staffs %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="staff_{{ staff.id }}">
-                                                {{ staff.name }} ({{ staff.department.name|default:"未分配" }} - {{ staff.position|default:"未设置" }})
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="staff_{{ staff.id }}" name="staff" value="{{ staff.id }}" {% if staff in report.staff.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
+                    <!-- 选项卡导航 -->
+                    <ul class="nav nav-tabs mb-4" id="reportEditTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">基本信息</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="personnel-tab" data-bs-toggle="tab" data-bs-target="#personnel" type="button" role="tab" aria-controls="personnel" aria-selected="false">人员与样品</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="testing-tab" data-bs-toggle="tab" data-bs-target="#testing" type="button" role="tab" aria-controls="testing" aria-selected="false">测试与标准</button>
+                        </li>
+                    </ul>
+
+                    <!-- 选项卡内容 -->
+                    <div class="tab-content" id="reportEditTabsContent">
+                        <!-- 基本信息页面 -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="project_order" class="form-label">关联的方案</label>
+                                        <select class="form-select" id="project_order" name="project_order">
+                                            <option value="">请选择</option>
+                                            {% for project_order in project_orders %}
+                                                <option value="{{ project_order.id }}" {% if report.project_order and project_order.id == report.project_order.id %}selected{% endif %}>{{ project_order.project_id }} - {{ project_order.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">报告名称</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="{{ report.name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">报告状态</label>
+                                        <select class="form-select" id="status" name="status" required>
+                                            <option value="pending" {% if report.status == 'pending' %}selected{% endif %}>报告编制</option>
+                                            <option value="in_progress" {% if report.status == 'in_progress' %}selected{% endif %}>报告审核</option>
+                                            <option value="completed" {% if report.status == 'completed' %}selected{% endif %}>报告签发</option>
+                                            <option value="cancelled" {% if report.status == 'cancelled' %}selected{% endif %}>报告作废</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">样品</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for sample in samples %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="sample_{{ sample.id }}">
-                                                {{ sample.sample_id }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="sample_{{ sample.id }}" name="samples" value="{{ sample.id }}" {% if sample in report.samples.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="client" class="form-label">客户</label>
+                                        <select class="form-select" id="client" name="client" required>
+                                            {% for client in clients %}
+                                                <option value="{{ client.id }}" {% if client.id == report.client.id %}selected{% endif %}>{{ client.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="order" class="form-label">订单</label>
+                                        <select class="form-select" id="order" name="order" required>
+                                            {% for order in orders %}
+                                                <option value="{{ order.id }}" {% if order.id == report.order.id %}selected{% endif %}>{{ order.order_id }} - {{ order.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">报告描述</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3">{{ report.description }}</textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">测试类型</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for standard in standards %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="test_type_{{ standard.id }}">
-                                                {{ standard.standard_id }} - {{ standard.test_name }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="test_type_{{ standard.id }}" name="test_types" value="{{ standard.id }}" {% if standard in report.test_types.all %}checked{% endif %}>
+
+                        <!-- 人员与样品页面 -->
+                        <div class="tab-pane fade" id="personnel" role="tabpanel" aria-labelledby="personnel-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            负责员工
+                                            <div class="input-group input-group-sm w-50">
+                                                <input type="text" id="staffSearch" class="form-control" placeholder="搜索员工、部门或职务...">
+                                                <button class="btn btn-outline-secondary" type="button" id="btnSearchStaff">搜索</button>
+                                                <button class="btn btn-outline-secondary" type="button" id="btnClearStaffSearch">清空</button>
+                                            </div>
+                                        </label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;" id="staffListContainer">
+                                            {% for staff in staffs %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center staff-item" 
+                                                     data-staff-name="{{ staff.name }}" 
+                                                     data-staff-dept="{{ staff.department.name|default:'' }}" 
+                                                     data-staff-pos="{{ staff.position_link.name|default:'' }}">
+                                                    <label class="form-check-label" for="staff_{{ staff.id }}">
+                                                        {{ staff.name }}
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            {{ staff.department.name|default:"未分配部门" }} - {{ staff.position_link.name|default:"未设置职务" }}
+                                                        </small>
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="staff_{{ staff.id }}" name="staff" value="{{ staff.id }}" {% if staff in report.staff.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
                                         </div>
-                                    {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">关联样品</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for sample in samples %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="sample_{{ sample.id }}">
+                                                        {{ sample.sample_id }} <small class="text-muted">({{ sample.sample_type.name|default:"-" }})</small>
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="sample_{{ sample.id }}" name="samples" value="{{ sample.id }}" {% if sample in report.samples.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">标准</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for standard in standard_radiation_hygiene %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="standard_{{ standard.id }}">
-                                                {{ standard.standard_id }} - {{ standard.name }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="standard_{{ standard.id }}" name="standards" value="{{ standard.id }}" {% if standard in report.standards.all %}checked{% endif %}>
+                        </div>
+
+                        <!-- 测试与标准页面 -->
+                        <div class="tab-pane fade" id="testing" role="tabpanel" aria-labelledby="testing-tab">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">测试类型</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for standard in standards %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="test_type_{{ standard.id }}">
+                                                        {{ standard.test_name }}
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="test_type_{{ standard.id }}" name="test_types" value="{{ standard.id }}" {% if standard in report.test_types.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
                                         </div>
-                                    {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">应用标准</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for standard in standard_radiation_hygiene %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="standard_{{ standard.id }}">
+                                                        {{ standard.standard_id }}
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="standard_{{ standard.id }}" name="standards" value="{{ standard.id }}" {% if standard in report.standards.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">测试结果</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for test in test_results %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="test_result_{{ test.id }}">
+                                                        {{ test.sample.sample_id }} - {{ test.test_type.test_name }}
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="test_result_{{ test.id }}" name="test_results" value="{{ test.id }}" {% if test in report.test_results.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">测试结果</label>
-                        <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                            {% for test in test_results %}
-                                <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                    <label class="form-check-label" for="test_result_{{ test.id }}">
-                                        {{ test.sample.sample_id }} - {{ test.test_type.test_name }}
-                                    </label>
-                                    <input class="form-check-input" type="checkbox" id="test_result_{{ test.id }}" name="test_results" value="{{ test.id }}" {% if test in report.test_results.all %}checked{% endif %}>
-                                </div>
-                            {% endfor %}
-                        </div>
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary btn-lg">保存报告</button>
+                        <a href="{% url 'report_detail' report.id %}" class="btn btn-secondary btn-lg">返回详情</a>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary">保存</button>
-                    <a href="{% url 'report_list' %}" class="btn btn-secondary">取消</a>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 员工列表搜索功能
+            const staffSearch = document.getElementById('staffSearch');
+            const btnSearchStaff = document.getElementById('btnSearchStaff');
+            const btnClearStaffSearch = document.getElementById('btnClearStaffSearch');
+            const staffItems = document.querySelectorAll('.staff-item');
+
+            function performStaffSearch() {
+                const searchTerm = staffSearch.value.toLowerCase().trim();
+                staffItems.forEach(item => {
+                    const name = (item.getAttribute('data-staff-name') || '').toLowerCase();
+                    const dept = (item.getAttribute('data-staff-dept') || '').toLowerCase();
+                    const pos = (item.getAttribute('data-staff-pos') || '').toLowerCase();
+                    
+                    if (name.includes(searchTerm) || dept.includes(searchTerm) || pos.includes(searchTerm)) {
+                        item.classList.remove('d-none');
+                        item.classList.add('d-flex');
+                    } else {
+                        item.classList.add('d-none');
+                        item.classList.remove('d-flex');
+                    }
+                });
+            }
+
+            if (staffSearch) {
+                // 实时搜索
+                staffSearch.addEventListener('input', performStaffSearch);
+                
+                // 回车搜索
+                staffSearch.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performStaffSearch();
+                    }
+                });
+            }
+
+            if (btnSearchStaff) {
+                btnSearchStaff.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    performStaffSearch();
+                });
+            }
+
+            if (btnClearStaffSearch) {
+                btnClearStaffSearch.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    staffSearch.value = '';
+                    performStaffSearch();
+                });
+            }
+        });
+    </script>
 {% endblock %}

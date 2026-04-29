@@ -60,52 +60,47 @@
                 </div>
             </div>
 
-            <!-- 样品信息卡片 -->
-            <div class="col-md-12 mb-4">
+            <!-- 样品类型卡片 -->
+            <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title">样品信息</h5>
+                        <h5 class="card-title">样品类型</h5>
                     </div>
                     <div class="card-body">
-                        {% if samples %}
-                            <div class="table-responsive">
-                                <table class="table table-striped table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>样品编号</th>
-                                            <th>客户</th>
-                                            <th>样品类型</th>
-                                            <th>采集日期</th>
-                                            <th>接收日期</th>
-                                            <th>状态</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for sample in samples %}
-                                            <tr>
-                                                <td>{{ sample.sample_id }}</td>
-                                                <td>{{ sample.client.name }}</td>
-                                                <td>{{ sample.sample_type.name|default:"-" }}</td>
-                                                <td>{{ sample.collection_date|date:"Y-m-d" }}</td>
-                                                <td>{{ sample.received_date|date:"Y-m-d H:i" }}</td>
-                                                <td>
-                                                    {% if sample.status == 'pending' %}
-                                                        <span class="badge bg-warning">待处理</span>
-                                                    {% elif sample.status == 'in_progress' %}
-                                                        <span class="badge bg-info">处理中</span>
-                                                    {% elif sample.status == 'completed' %}
-                                                        <span class="badge bg-success">已完成</span>
-                                                    {% elif sample.status == 'cancelled' %}
-                                                        <span class="badge bg-danger">已取消</span>
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                        {% if sample_types %}
+                            <ul class="list-group">
+                                {% for sample_type in sample_types %}
+                                    <li class="list-group-item">
+                                        <strong>{{ sample_type.name }}</strong>
+                                        {% if sample_type.description %}<br><small>{{ sample_type.description }}</small>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         {% else %}
-                            <p>该方案未关联任何样品</p>
+                            <p>该方案未关联任何样品类型</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 样品类型描述卡片 -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">样品类型描述</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if sample_type_descriptions %}
+                            <ul class="list-group">
+                                {% for sample_type_description in sample_type_descriptions %}
+                                    <li class="list-group-item">
+                                        <strong>{{ sample_type_description.sample_type.name }}</strong>
+                                        <br><small>{{ sample_type_description.description }}</small>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>该方案未关联任何样品类型描述</p>
                         {% endif %}
                     </div>
                 </div>

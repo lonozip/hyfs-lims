@@ -32,6 +32,14 @@
                         <label for="address" class="form-label">地址</label>
                         <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label for="province" class="form-label">省份</label>
+                        <input type="text" class="form-control" id="province" name="province">
+                    </div>
+                    <div class="mb-3">
+                        <label for="city" class="form-label">城市</label>
+                        <input type="text" class="form-control" id="city" name="city">
+                    </div>
                     <button type="submit" class="btn btn-primary">保存</button>
                     <a href="{% url 'client_list' %}" class="btn btn-secondary">取消</a>
                 </form>

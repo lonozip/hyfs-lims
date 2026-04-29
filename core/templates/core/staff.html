@@ -3,7 +3,12 @@
 {% block content %}
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">人员管理</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-toolbar mb-2 mb-md-0 d-flex align-items-center">
+            <div class="input-group input-group-sm me-3" style="width: 300px;">
+                <input type="text" id="staffSearch" class="form-control" placeholder="搜索姓名、部门或职务...">
+                <button class="btn btn-outline-secondary" type="button" id="btnSearchStaff">搜索</button>
+                <button class="btn btn-outline-secondary" type="button" id="btnClearStaffSearch">清空</button>
+            </div>
             <a href="{% url 'staff_create' %}" class="btn btn-primary">
                 添加员工
             </a>
@@ -26,21 +31,76 @@
             </thead>
             <tbody>
                 {% for staff in staffs %}
-                <tr>
+                <tr class="staff-row" 
+                    data-name="{{ staff.name }}" 
+                    data-dept="{{ staff.department.name }}" 
+                    data-pos="{{ staff.position_link.name|default:'' }}">
                     <td>{{ staff.name }}</td>
-                    <td>{{ staff.department }}</td>
-                    <td>{{ staff.position|default:"未设置" }}</td>
+                    <td>{{ staff.department.name }}</td>
+                    <td>{{ staff.position_link.name|default:"未设置" }}</td>
                     <td>{{ staff.email }}</td>
                     <td>{{ staff.phone }}</td>
                     <td>{{ staff.address }}</td>
                     <td>{{ staff.created_at|date:"Y-m-d H:i" }}</td>
                     <td>
                         <a href="{% url 'staff_edit' staff.id %}" class="btn btn-sm btn-primary">编辑</a>
-                        <a href="/admin/core/staff/{{ staff.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
+                        <a href="{% url 'staff_delete' staff.id %}" class="btn btn-sm btn-danger">删除</a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const staffSearch = document.getElementById('staffSearch');
+            const btnSearchStaff = document.getElementById('btnSearchStaff');
+            const btnClearStaffSearch = document.getElementById('btnClearStaffSearch');
+            const staffRows = document.querySelectorAll('.staff-row');
+
+            function performStaffSearch() {
+                const searchTerm = staffSearch.value.toLowerCase().trim();
+                staffRows.forEach(row => {
+                    const name = (row.getAttribute('data-name') || '').toLowerCase();
+                    const dept = (row.getAttribute('data-dept') || '').toLowerCase();
+                    const pos = (row.getAttribute('data-pos') || '').toLowerCase();
+                    
+                    if (name.includes(searchTerm) || dept.includes(searchTerm) || pos.includes(searchTerm)) {
+                        row.classList.remove('d-none');
+                    } else {
+                        row.classList.add('d-none');
+                    }
+                });
+            }
+
+            if (staffSearch) {
+                // 实时搜索
+                staffSearch.addEventListener('input', performStaffSearch);
+                
+                // 回车搜索
+                staffSearch.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performStaffSearch();
+                    }
+                });
+            }
+
+            if (btnSearchStaff) {
+                btnSearchStaff.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    performStaffSearch();
+                });
+            }
+
+            if (btnClearStaffSearch) {
+                btnClearStaffSearch.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    staffSearch.value = '';
+                    performStaffSearch();
+                });
+            }
+        });
+    </script>
 {% endblock %}

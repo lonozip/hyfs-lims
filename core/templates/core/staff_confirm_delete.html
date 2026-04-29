@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+
+{% block title %}确认删除员工{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">确认删除员工</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">警告：此操作不可撤销</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">您确定要删除员工 <strong>{{ staff.name }}</strong> 吗？</p>
+                        <hr>
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">员工编号:</div>
+                            <div class="col-sm-9">{{ staff.staff_id }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">部门:</div>
+                            <div class="col-sm-9">{{ staff.department.name }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">职务:</div>
+                            <div class="col-sm-9">{{ staff.position|default:"未设置" }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">电子邮件:</div>
+                            <div class="col-sm-9">{{ staff.email }}</div>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-danger btn-lg px-4">确认删除</button>
+                                <a href="{% url 'staff_list' %}" class="btn btn-secondary btn-lg px-4 ms-2">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

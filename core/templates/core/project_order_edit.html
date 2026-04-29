@@ -2,6 +2,29 @@
 
 {% block title %}编辑方案{% endblock %}
 
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+        padding-left: 12px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .select2-container .select2-selection--single:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">编辑方案</h1>
@@ -12,101 +35,508 @@
             <div class="col-md-12">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="name" class="form-label">方案名称</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ project_order.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">方案描述</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ project_order.description }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="client" class="form-label">客户</label>
-                        <select class="form-select" id="client" name="client" required>
-                            {% for client in clients %}
-                                <option value="{{ client.id }}" {% if client.id == project_order.client.id %}selected{% endif %}>{{ client.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="order" class="form-label">订单</label>
-                        <select class="form-select" id="order" name="order" required>
-                            {% for order in orders %}
-                                <option value="{{ order.id }}" {% if order.id == project_order.order.id %}selected{% endif %}>{{ order.name }} ({{ order.order_id }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">方案状态</label>
-                        <select class="form-select" id="status" name="status" required>
-                            <option value="pending" {% if project_order.status == 'pending' %}selected{% endif %}>待处理</option>
-                            <option value="in_progress" {% if project_order.status == 'in_progress' %}selected{% endif %}>处理中</option>
-                            <option value="completed" {% if project_order.status == 'completed' %}selected{% endif %}>已完成</option>
-                            <option value="cancelled" {% if project_order.status == 'cancelled' %}selected{% endif %}>已取消</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">员工</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for staff in staffs %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="staff_{{ staff.id }}">
-                                                {{ staff.name }} ({{ staff.department.name|default:"未分配" }} - {{ staff.position|default:"未设置" }})
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="staff_{{ staff.id }}" name="staff" value="{{ staff.id }}" {% if staff in project_order.staff.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
+                    
+                    <!-- 选项卡导航 -->
+                    <ul class="nav nav-tabs mb-4" id="projectOrderEditTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">基本信息</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="personnel-tab" data-bs-toggle="tab" data-bs-target="#personnel" type="button" role="tab" aria-controls="personnel" aria-selected="false">人员与样品</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="testing-tab" data-bs-toggle="tab" data-bs-target="#testing" type="button" role="tab" aria-controls="testing" aria-selected="false">测试与标准</button>
+                        </li>
+                    </ul>
+
+                    <!-- 选项卡内容 -->
+                    <div class="tab-content" id="projectOrderEditTabsContent">
+                        <!-- 基本信息页面 -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">方案名称</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="{{ project_order.name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">方案描述</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3">{{ project_order.description }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">方案状态</label>
+                                        <select class="form-select" id="status" name="status" required>
+                                            <option value="pending" {% if project_order.status == 'pending' %}selected{% endif %}>待处理</option>
+                                            <option value="in_progress" {% if project_order.status == 'in_progress' %}selected{% endif %}>处理中</option>
+                                            <option value="completed" {% if project_order.status == 'completed' %}selected{% endif %}>已完成</option>
+                                            <option value="cancelled" {% if project_order.status == 'cancelled' %}selected{% endif %}>已取消</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">样品</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for sample in samples %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="sample_{{ sample.id }}">
-                                                {{ sample.sample_id }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="sample_{{ sample.id }}" name="samples" value="{{ sample.id }}" {% if sample in project_order.samples.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">测试类型</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for test_type in test_types %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="test_type_{{ test_type.id }}">
-                                                {{ test_type.standard_id }} - {{ test_type.name }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="test_type_{{ test_type.id }}" name="test_types" value="{{ test_type.id }}" {% if test_type in project_order.test_types.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">标准</label>
-                                <div class="form-control p-0" style="max-height: 200px; overflow-y: auto;">
-                                    {% for standard in standards %}
-                                        <div class="form-check p-1 border-bottom d-flex justify-content-between align-items-center">
-                                            <label class="form-check-label" for="standard_{{ standard.id }}">
-                                                {{ standard.standard_id }} - {{ standard.name }}
-                                            </label>
-                                            <input class="form-check-input" type="checkbox" id="standard_{{ standard.id }}" name="standards" value="{{ standard.id }}" {% if standard in project_order.standards.all %}checked{% endif %}>
-                                        </div>
-                                    {% endfor %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="client" class="form-label">客户</label>
+                                        <select class="form-select select2-searchable" id="client" name="client" required>
+                                            <option value="">请选择客户</option>
+                                            {% for client in clients %}
+                                                <option value="{{ client.id }}" {% if client.id == project_order.client.id %}selected{% endif %}>{{ client.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="order" class="form-label">订单</label>
+                                        <select class="form-select select2-searchable" id="order" name="order" required>
+                                            <option value="">请选择订单</option>
+                                            {% for order in orders %}
+                                                {% if order.client.id == project_order.client.id %}
+                                                    <option value="{{ order.id }}" {% if order.id == project_order.order.id %}selected{% endif %}>{{ order.name }} ({{ order.order_id }})</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 人员与样品页面 -->
+                        <div class="tab-pane fade" id="personnel" role="tabpanel" aria-labelledby="personnel-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            负责员工
+                                            <div class="input-group input-group-sm w-50">
+                                                <input type="text" id="staffSearch" class="form-control" placeholder="搜索员工、部门或职务...">
+                                                <button class="btn btn-outline-secondary" type="button" id="btnSearchStaff">搜索</button>
+                                                <button class="btn btn-outline-secondary" type="button" id="btnClearStaffSearch">清空</button>
+                                            </div>
+                                        </label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;" id="staffListContainer">
+                                            {% for staff in staffs %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center staff-item" 
+                                                     data-staff-name="{{ staff.name }}" 
+                                                     data-staff-dept="{{ staff.department.name|default:'' }}" 
+                                                     data-staff-pos="{{ staff.position_link.name|default:'' }}">
+                                                    <label class="form-check-label" for="staff_{{ staff.id }}">
+                                                        {{ staff.name }}
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            {{ staff.department.name|default:"未分配部门" }} - {{ staff.position_link.name|default:"未设置职务" }}
+                                                        </small>
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="staff_{{ staff.id }}" name="staff" value="{{ staff.id }}" {% if staff in project_order.staff.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">样品类型</label>
+                                        <div class="form-control p-0" style="max-height: 250px; overflow-y: auto;">
+                                            {% for sample_type in sample_types %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="sample_type_{{ sample_type.id }}">
+                                                        {{ sample_type.name }}
+                                                    </label>
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input sample-type-checkbox" type="checkbox" id="sample_type_{{ sample_type.id }}" name="sample_types" value="{{ sample_type.id }}" {% if sample_type in project_order.sample_types.all %}checked{% endif %} data-sample-type-id="{{ sample_type.id }}">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary ms-2 select-descriptions-btn" data-sample-type-id="{{ sample_type.id }}" data-sample-type-name="{{ sample_type.name }}" {% if sample_type not in project_order.sample_types.all %}disabled{% endif %}>
+                                                            选择描述
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">已选样品描述</label>
+                                        <div id="selected-descriptions" class="form-control p-2 bg-light" style="min-height: 120px; max-height: 250px; overflow-y: auto;">
+                                            {% for sample_type in project_order.sample_types.all %}
+                                                <div class="mb-2" data-sample-type-id="{{ sample_type.id }}">
+                                                    <strong>{{ sample_type.name }}:</strong>
+                                                    <div class="ms-2" id="desc-group-{{ sample_type.id }}">
+                                                        {% for desc in project_order.sample_type_descriptions.all %}
+                                                            {% if desc.sample_type.id == sample_type.id %}
+                                                                <span class="badge bg-secondary m-1 selected-desc-tag" data-desc-id="{{ desc.id }}">{{ desc.description }} <span class="remove-desc cursor-pointer" data-desc-id="{{ desc.id }}">&times;</span></span>
+                                                                <input type="hidden" name="sample_type_descriptions" value="{{ desc.id }}">
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                            {% if not project_order.sample_types.all %}
+                                                <span class="text-muted">暂无选择的样品描述</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 测试与标准页面 -->
+                        <div class="tab-pane fade" id="testing" role="tabpanel" aria-labelledby="testing-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">测试类型</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for test_type in test_types %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="test_type_{{ test_type.id }}">
+                                                        {{ test_type.standard_id }} - {{ test_type.name }}
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="test_type_{{ test_type.id }}" name="test_types" value="{{ test_type.id }}" {% if test_type in project_order.test_types.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">应用标准</label>
+                                        <div class="form-control p-0" style="max-height: 400px; overflow-y: auto;">
+                                            {% for standard in standards %}
+                                                <div class="form-check p-2 border-bottom d-flex justify-content-between align-items-center">
+                                                    <label class="form-check-label" for="standard_{{ standard.id }}">
+                                                        {{ standard.standard_id }} - {{ standard.name }}
+                                                    </label>
+                                                    <input class="form-check-input" type="checkbox" id="standard_{{ standard.id }}" name="standards" value="{{ standard.id }}" {% if standard in project_order.standards.all %}checked{% endif %}>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">保存</button>
-                    <a href="{% url 'project_order_list' %}" class="btn btn-secondary">取消</a>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary btn-lg">保存方案</button>
+                        <a href="{% url 'project_order_list' %}" class="btn btn-secondary btn-lg">取消</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- 样品描述选择弹窗 -->
+    <div class="modal fade" id="descriptionsModal" tabindex="-1" aria-labelledby="descriptionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="descriptionsModalLabel">选择样品描述 - <span id="modalSampleTypeName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="descriptionsList" class="form-control p-2" style="max-height: 300px; overflow-y: auto;">
+                        <!-- 动态填充描述列表 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmDescriptionsBtn">确认选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 员工列表搜索功能
+            const staffSearch = document.getElementById('staffSearch');
+            const btnSearchStaff = document.getElementById('btnSearchStaff');
+            const btnClearStaffSearch = document.getElementById('btnClearStaffSearch');
+            const staffItems = document.querySelectorAll('.staff-item');
+
+            function performStaffSearch() {
+                const searchTerm = staffSearch.value.toLowerCase().trim();
+                staffItems.forEach(item => {
+                    const name = (item.getAttribute('data-staff-name') || '').toLowerCase();
+                    const dept = (item.getAttribute('data-staff-dept') || '').toLowerCase();
+                    const pos = (item.getAttribute('data-staff-pos') || '').toLowerCase();
+                    
+                    if (name.includes(searchTerm) || dept.includes(searchTerm) || pos.includes(searchTerm)) {
+                        item.classList.remove('d-none');
+                        item.classList.add('d-flex');
+                    } else {
+                        item.classList.add('d-none');
+                        item.classList.remove('d-flex');
+                    }
+                });
+            }
+
+            if (staffSearch) {
+                // 实时搜索
+                staffSearch.addEventListener('input', performStaffSearch);
+                
+                // 回车搜索
+                staffSearch.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performStaffSearch();
+                    }
+                });
+            }
+
+            if (btnSearchStaff) {
+                btnSearchStaff.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    performStaffSearch();
+                });
+            }
+
+            if (btnClearStaffSearch) {
+                btnClearStaffSearch.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    staffSearch.value = '';
+                    performStaffSearch();
+                });
+            }
+
+            // 存储所有样品类型描述的映射
+            const sampleTypeDescriptionsMap = {};
+            
+            // 初始化样品类型描述映射
+            {% for sample_type_description in sample_type_descriptions %}
+                if (!sampleTypeDescriptionsMap[{{ sample_type_description.sample_type.id }}]) {
+                    sampleTypeDescriptionsMap[{{ sample_type_description.sample_type.id }}] = [];
+                }
+                sampleTypeDescriptionsMap[{{ sample_type_description.sample_type.id }}].push({
+                    id: {{ sample_type_description.id }},
+                    description: '{{ sample_type_description.description }}'
+                });
+            {% endfor %}
+
+            // 当前选中的样品类型ID（用于弹窗）
+            let currentSampleTypeId = null;
+            // 当前弹窗中选中的描述ID列表
+            let selectedDescIds = [];
+
+            // 客户选择联动订单（使用jQuery监听Select2事件）
+            // 保存当前选中的订单ID
+            const currentOrderId = '{{ project_order.order.id }}';
+            
+            $('#client').on('change', function() {
+                const clientId = $(this).val();
+                
+                // 清空订单选择（兼容Select2）
+                $('#order').empty();
+                $('#order').append('<option value="">请选择订单</option>');
+                $('#order').trigger('change');
+                
+                if (clientId) {
+                    // 发送AJAX请求获取该客户的订单
+                    fetch(`/api/client_orders/?client_id=${clientId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.orders && data.orders.length > 0) {
+                                $('#order').empty();
+                                $('#order').append('<option value="">请选择订单</option>');
+                                data.orders.forEach(order => {
+                                    const option = new Option(`${order.name} (${order.order_id})`, order.id, false, false);
+                                    $('#order').append(option);
+                                });
+                                // 如果是当前选中的订单，设置选中状态
+                                if (currentOrderId) {
+                                    $('#order').val(currentOrderId).trigger('change');
+                                }
+                                $('#order').trigger('change');
+                            } else {
+                                $('#order').empty();
+                                $('#order').append('<option value="">该客户暂无订单</option>');
+                                $('#order').trigger('change');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取订单失败:', error);
+                            $('#order').empty();
+                            $('#order').append('<option value="">获取订单失败</option>');
+                            $('#order').trigger('change');
+                        });
+                }
+            });
+
+            // 样品类型复选框变更事件
+            document.querySelectorAll('.sample-type-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const sampleTypeId = this.getAttribute('data-sample-type-id');
+                    const btn = document.querySelector(`.select-descriptions-btn[data-sample-type-id="${sampleTypeId}"]`);
+                    
+                    if (this.checked) {
+                        btn.disabled = false;
+                    } else {
+                        btn.disabled = true;
+                        // 取消选中时，移除该样品类型对应的所有描述
+                        removeDescriptionsBySampleType(sampleTypeId);
+                    }
+                });
+            });
+
+            // 选择描述按钮点击事件
+            document.querySelectorAll('.select-descriptions-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentSampleTypeId = this.getAttribute('data-sample-type-id');
+                    const sampleTypeName = this.getAttribute('data-sample-type-name');
+                    
+                    // 设置弹窗标题
+                    document.getElementById('modalSampleTypeName').textContent = sampleTypeName;
+                    
+                    // 获取已选中的描述ID
+                    selectedDescIds = [];
+                    document.querySelectorAll('.selected-desc-tag').forEach(tag => {
+                        selectedDescIds.push(tag.getAttribute('data-desc-id'));
+                    });
+                    
+                    // 填充描述列表
+                    populateDescriptionsList(currentSampleTypeId);
+                    
+                    // 显示弹窗
+                    const modal = new bootstrap.Modal(document.getElementById('descriptionsModal'));
+                    modal.show();
+                });
+            });
+
+            // 填充描述列表
+            function populateDescriptionsList(sampleTypeId) {
+                const descriptions = sampleTypeDescriptionsMap[sampleTypeId] || [];
+                const container = document.getElementById('descriptionsList');
+                
+                container.innerHTML = '';
+                
+                if (descriptions.length === 0) {
+                    container.innerHTML = '<span class="text-muted">该样品类型暂无描述</span>';
+                    return;
+                }
+                
+                descriptions.forEach(desc => {
+                    const isSelected = selectedDescIds.includes(desc.id.toString());
+                    const div = document.createElement('div');
+                    div.className = `form-check p-1 border-bottom ${isSelected ? 'bg-light' : ''}`;
+                    div.innerHTML = `
+                        <label class="form-check-label w-full d-flex justify-content-between">
+                            <span>${desc.description}</span>
+                            <input class="form-check-input desc-checkbox" type="checkbox" data-desc-id="${desc.id}" data-sample-type-id="${sampleTypeId}" ${isSelected ? 'checked' : ''}>
+                        </label>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // 确认选择按钮点击事件
+            document.getElementById('confirmDescriptionsBtn').addEventListener('click', function() {
+                // 获取弹窗中选中的描述
+                const checkboxes = document.querySelectorAll('.desc-checkbox:checked');
+                const newDescIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-desc-id'));
+                
+                // 移除该样品类型之前的所有描述
+                removeDescriptionsBySampleType(currentSampleTypeId);
+                
+                // 添加新选中的描述
+                const descriptions = sampleTypeDescriptionsMap[currentSampleTypeId] || [];
+                const selectedDescriptions = descriptions.filter(d => newDescIds.includes(d.id.toString()));
+                
+                const selectedContainer = document.getElementById('selected-descriptions');
+                
+                // 如果还没有该样品类型的分组，先创建分组
+                let groupContainer = selectedContainer.querySelector(`[data-sample-type-id="${currentSampleTypeId}"]`);
+                if (!groupContainer) {
+                    // 获取样品类型名称
+                    const sampleTypeName = document.querySelector(`.select-descriptions-btn[data-sample-type-id="${currentSampleTypeId}"]`).getAttribute('data-sample-type-name');
+                    
+                    groupContainer = document.createElement('div');
+                    groupContainer.className = 'mb-2';
+                    groupContainer.setAttribute('data-sample-type-id', currentSampleTypeId);
+                    groupContainer.innerHTML = `<strong>${sampleTypeName}:</strong><div class="ml-3" id="desc-group-${currentSampleTypeId}"></div>`;
+                    selectedContainer.appendChild(groupContainer);
+                }
+                
+                const descGroup = document.getElementById(`desc-group-${currentSampleTypeId}`);
+                
+                selectedDescriptions.forEach(desc => {
+                    const tag = document.createElement('span');
+                    tag.className = 'badge bg-secondary m-1 selected-desc-tag';
+                    tag.setAttribute('data-desc-id', desc.id);
+                    tag.innerHTML = `${desc.description} <span class="remove-desc" data-desc-id="${desc.id}">&times;</span>`;
+                    
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'sample_type_descriptions';
+                    hiddenInput.value = desc.id;
+                    
+                    descGroup.appendChild(tag);
+                    descGroup.appendChild(hiddenInput);
+                    
+                    // 添加删除事件
+                    tag.querySelector('.remove-desc').addEventListener('click', function() {
+                        tag.remove();
+                        hiddenInput.remove();
+                    });
+                });
+                
+                // 隐藏弹窗
+                const modal = bootstrap.Modal.getInstance(document.getElementById('descriptionsModal'));
+                modal.hide();
+                
+                // 更新选中的描述ID列表
+                selectedDescIds = document.querySelectorAll('input[name="sample_type_descriptions"]');
+                selectedDescIds = Array.from(selectedDescIds).map(input => input.value);
+            });
+
+            // 根据样品类型ID移除描述
+            function removeDescriptionsBySampleType(sampleTypeId) {
+                const groupContainer = document.querySelector(`[data-sample-type-id="${sampleTypeId}"]`);
+                if (groupContainer) {
+                    groupContainer.remove();
+                }
+                // 同时移除对应的hidden input
+                document.querySelectorAll(`input[name="sample_type_descriptions"]`).forEach(input => {
+                    const descId = input.value;
+                    const desc = findDescriptionById(descId);
+                    if (desc && desc.sample_type_id == sampleTypeId) {
+                        input.remove();
+                    }
+                });
+            }
+
+            // 根据ID查找描述
+            function findDescriptionById(descId) {
+                for (const sampleTypeId in sampleTypeDescriptionsMap) {
+                    const desc = sampleTypeDescriptionsMap[sampleTypeId].find(d => d.id == descId);
+                    if (desc) {
+                        return { ...desc, sample_type_id: sampleTypeId };
+                    }
+                }
+                return null;
+            }
+
+            // 页面加载时，如果没有选中的描述，显示提示
+            const selectedContainer = document.getElementById('selected-descriptions');
+            if (selectedContainer.children.length === 0) {
+                selectedContainer.innerHTML = '<span class="text-muted">暂无选择的样品描述</span>';
+            }
+        });
+    </script>
+    
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Select2 中文语言包 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/zh-CN.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 初始化客户搜索下拉框
+            $('#client').select2({
+                placeholder: '请选择客户',
+                allowClear: true,
+                language: 'zh-CN'
+            });
+            
+            // 初始化订单搜索下拉框
+            $('#order').select2({
+                placeholder: '请选择订单',
+                allowClear: true,
+                language: 'zh-CN'
+            });
+        });
+    </script>
 {% endblock %}

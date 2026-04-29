@@ -3,8 +3,15 @@ from django.urls import path
 # 导入当前应用的视图模块
 from . import views
 
+# 简单的测试视图
+from django.http import HttpResponse
+def test_view(request):
+    return HttpResponse('Hello, World!')
+
 # URL模式列表
 urlpatterns = [
+    # 测试视图URL
+    path('test/', test_view, name='test_view'),
     # 首页URL
     path('', views.home, name='home'),
     # 注册URL
@@ -41,12 +48,24 @@ urlpatterns = [
     path('orders/<int:pk>/delete/', views.order_delete, name='order_delete'),
     # 员工列表URL
     path('staff/', views.staff_list, name='staff_list'),
-    # 员工添加URL
+    # 组织架构管理URL
+    path('org/', views.org_manage, name='org_manage'),
+    path('department/create/', views.department_create, name='department_create'),
+    path('department/<int:pk>/edit/', views.department_edit, name='department_edit'),
+    path('department/<int:pk>/delete/', views.department_delete, name='department_delete'),
+    path('position/create/', views.position_create, name='position_create'),
+    path('position/<int:pk>/edit/', views.position_edit, name='position_edit'),
+    path('position/<int:pk>/delete/', views.position_delete, name='position_delete'),
+    # 员工创建URL员工添加URL
     path('staff/create/', views.staff_create, name='staff_create'),
     # 员工编辑URL
     path('staff/<int:pk>/edit/', views.staff_edit, name='staff_edit'),
+    # 员工删除URL
+    path('staff/<int:pk>/delete/', views.staff_delete, name='staff_delete'),
     # 项目方案列表URL
     path('project_orders/', views.project_order_list, name='project_order_list'),
+    # 获取客户订单API
+    path('api/client_orders/', views.get_client_orders, name='get_client_orders'),
     # 项目方案添加URL
     path('project_orders/create/', views.project_order_create, name='project_order_create'),
     # 项目方案详情URL
@@ -73,5 +92,21 @@ urlpatterns = [
     path('standard/', views.standard_list, name='standard_list'),
     # 获取订单的AJAX URL
     path('sample/get_orders/', views.get_orders, name='get_orders'),
+    # 样品类型描述列表URL
+    path('sample_type_descriptions/', views.sample_type_description_list, name='sample_type_description_list'),
+    # 样品类型描述添加URL
+    path('sample_type_descriptions/create/', views.sample_type_description_create, name='sample_type_description_create'),
+    # 样品类型描述编辑URL
+    path('sample_type_descriptions/<int:pk>/edit/', views.sample_type_description_edit, name='sample_type_description_edit'),
+    # 样品类型描述删除URL
+    path('sample_type_descriptions/<int:pk>/delete/', views.sample_type_description_delete, name='sample_type_description_delete'),
+    # 样品类型列表URL
+    path('sample_types/', views.sample_type_list, name='sample_type_list'),
+    # 样品类型添加URL
+    path('sample_types/create/', views.sample_type_create, name='sample_type_create'),
+    # 样品类型编辑URL
+    path('sample_types/<int:pk>/edit/', views.sample_type_edit, name='sample_type_edit'),
+    # 样品类型删除URL
+    path('sample_types/<int:pk>/delete/', views.sample_type_delete, name='sample_type_delete'),
     
 ]

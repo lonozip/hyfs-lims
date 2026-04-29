@@ -27,6 +27,9 @@
             background-color: #007bff;
         }
     </style>
+    {% block extra_css %}{% endblock %}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container-fluid">
@@ -81,8 +84,23 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/staff/' %}active{% endif %}" href="/staff/">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'staff_list' %}active{% endif %}" href="{% url 'staff_list' %}">
                                 员工管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'org_manage' %}active{% endif %}" href="{% url 'org_manage' %}">
+                                组织架构
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/sample_types/' %}active{% endif %}" href="{% url 'sample_type_list' %}">
+                                样品类型管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/sample_type_descriptions/' %}active{% endif %}" href="{% url 'sample_type_description_list' %}">
+                                样品类型描述
                             </a>
                         </li>
 

@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block title %}添加样品类型描述{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">添加样品类型描述</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="sample_type" class="form-label">样品类型</label>
+                        <select class="form-select" id="sample_type" name="sample_type" required>
+                            <option value="">请选择样品类型</option>
+                            {% for sample_type in sample_types %}
+                                <option value="{{ sample_type.id }}">{{ sample_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">描述内容</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'sample_type_description_list' %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

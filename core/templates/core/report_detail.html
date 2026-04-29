@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">报告详情</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <a href="/admin/core/report/{{ report.id }}/change/" class="btn btn-primary">
+            <a href="{% url 'report_edit' report.id %}" class="btn btn-primary">
                 编辑报告
             </a>
             
@@ -152,6 +152,51 @@
                             </div>
                         {% else %}
                             <p>该方案未关联任何样品</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 样品类型卡片 -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">样品类型</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if sample_types %}
+                            <ul class="list-group">
+                                {% for sample_type in sample_types %}
+                                    <li class="list-group-item">
+                                        <strong>{{ sample_type.name }}</strong>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>该方案未关联任何样品类型</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 样品类型描述卡片 -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">样品类型描述</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if sample_type_descriptions %}
+                            <ul class="list-group">
+                                {% for sample_type_description in sample_type_descriptions %}
+                                    <li class="list-group-item">
+                                        <strong>{{ sample_type_description.sample_type.name }}</strong>
+                                        <br><small>{{ sample_type_description.description }}</small>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>该方案未关联任何样品类型描述</p>
                         {% endif %}
                     </div>
                 </div>

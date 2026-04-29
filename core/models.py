@@ -48,6 +48,11 @@ class Client(models.Model):
     phone = models.CharField(max_length=20, verbose_name='电话')
     # 地址
     address = models.TextField(verbose_name='地址')
+    # 省份
+    province = models.CharField(max_length=100, blank=True, default='', verbose_name='省份')
+    # 城市
+    city = models.CharField(max_length=100, blank=True, default='', verbose_name='城市')
+
     # 创建人
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
     # 创建时间
@@ -84,6 +89,28 @@ class SampleType(models.Model):
     class Meta:
         verbose_name = '样品类型'
         verbose_name_plural = '样品类型'
+
+
+class SampleTypeDescription(models.Model):
+    """样品类型描述模型"""
+    # 关联的样品类型
+    sample_type = models.ForeignKey(SampleType, on_delete=models.CASCADE, verbose_name='样品类型')
+    # 描述内容
+    description = models.TextField(blank=True, verbose_name='描述内容')
+    # 创建人
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+    # 创建时间
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    # 更新时间
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    def __str__(self):
+        """返回样品类型描述作为字符串表示"""
+        return self.description
+
+    class Meta:
+        verbose_name = '样品类型描述'
+        verbose_name_plural = '样品类型描述'
 
 
 class Order(models.Model):
@@ -292,6 +319,28 @@ class Department(models.Model):
         verbose_name_plural = '部门'
 
 
+class Position(models.Model):
+    """职务模型"""
+    # 职务名称
+    name = models.CharField(max_length=255, verbose_name='职务名称')
+    # 职务描述
+    description = models.TextField(blank=True, verbose_name='职务描述')
+    # 创建人
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+    # 创建时间
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    # 更新时间
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    def __str__(self):
+        """返回职务名称作为字符串表示"""
+        return self.name
+
+    class Meta:
+        verbose_name = '职务'
+        verbose_name_plural = '职务'
+
+
 class Staff(models.Model):
     """员工模型"""
     # 员工id
@@ -310,8 +359,10 @@ class Staff(models.Model):
     phone = models.CharField(max_length=20, verbose_name='电话')
     # 地址
     address = models.TextField(verbose_name='地址')
-    # 职务
-    position = models.CharField(max_length=255, default='', verbose_name='职务')
+    # 职务 (旧的字符串字段)
+    position = models.CharField(max_length=255, default='', verbose_name='职务(旧)')
+    # 职务 (新的模型关联)
+    position_link = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='职务')
     # 创建人
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
     # 创建时间
@@ -364,8 +415,10 @@ class Project_Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     # 关联的员工
     staff = models.ManyToManyField(Staff, verbose_name='员工', related_name='assigned_project_orders')
-    # 关联的样品
-    samples = models.ManyToManyField(Sample, verbose_name='样品')
+    # 关联的样品类型
+    sample_types = models.ManyToManyField(SampleType, verbose_name='样品类型')
+    # 关联的样品类型描述
+    sample_type_descriptions = models.ManyToManyField(SampleTypeDescription, verbose_name='样品类型描述')
     # 关联的测试类型（现在关联到Standard模型）
     test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='project_order_test_types')
     # 关联的标准
@@ -455,4 +508,3 @@ class Report(models.Model):
             ('can_sign_report', '可以签发报告'),
             ('can_reject_report', '可以拒绝报告'),
         )
-

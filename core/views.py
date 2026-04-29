@@ -7,14 +7,14 @@ from django.views.decorators.http import require_GET
 # 导入JSON响应模块
 from django.http import JsonResponse, HttpResponse
 # 导入模型
-from .models import Client, Sample, Test, Order, Staff, Project_Order, Report, Department, SampleType
+from .models import Client, Sample, Test, Order, Staff, Project_Order, Report, Department, SampleType, SampleTypeDescription, Position
 # 导入standard应用的模型
 from standard.models import Standard, StandardLibrary, Standard_radiation_hygiene
 
 # 导入消息框架
 from django.contrib import messages
-# 导入ORM聚合函数
-from django.db.models import Count
+# 导入ORM聚合函数和Q对象
+from django.db.models import Count, Q
 # 导入JSON模块
 import json
 # 导入用户模型和认证相关功能
@@ -137,10 +137,25 @@ def home(request):
 @login_required
 def client_list(request):
     """客户列表视图函数"""
+    # 获取搜索关键词
+    search_query = request.GET.get('search', '')
+    
     # 获取所有客户
     clients = Client.objects.all()
+    
+    # 如果有搜索关键词，进行筛选
+    if search_query:
+        clients = clients.filter(
+            Q(name__icontains=search_query) |
+            Q(province__icontains=search_query) |
+            Q(city__icontains=search_query)
+        )
+    
     # 渲染客户列表模板
-    return render(request, 'core/client_list.html', {'clients': clients})
+    return render(request, 'core/client_list.html', {
+        'clients': clients,
+        'search_query': search_query
+    })
 
 
 @login_required
@@ -153,6 +168,8 @@ def client_create(request):
         email = request.POST['email']
         phone = request.POST['phone']
         address = request.POST['address']
+        province = request.POST.get('province', '')
+        city = request.POST.get('city', '')
         
         # 创建客户对象
         client = Client(
@@ -160,7 +177,9 @@ def client_create(request):
             contact_person=contact_person,
             email=email,
             phone=phone,
-            address=address
+            address=address,
+            province=province,
+            city=city
         )
         client.save()
         
@@ -186,6 +205,8 @@ def client_edit(request, pk):
         email = request.POST['email']
         phone = request.POST['phone']
         address = request.POST['address']
+        province = request.POST.get('province', '')
+        city = request.POST.get('city', '')
         
         # 更新客户对象
         client.name = name
@@ -193,6 +214,8 @@ def client_edit(request, pk):
         client.email = email
         client.phone = phone
         client.address = address
+        client.province = province
+        client.city = city
         client.save()
         
         # 显示成功消息
@@ -535,6 +558,98 @@ def order_edit(request, pk):
 
 # 员工列表视图函数
 @login_required
+def org_manage(request):
+    """组织架构管理视图 (部门和职务)"""
+    departments = Department.objects.all()
+    positions = Position.objects.all()
+    return render(request, 'core/org_manage.html', {
+        'departments': departments,
+        'positions': positions
+    })
+
+@login_required
+def department_create(request):
+    """创建部门"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        Department.objects.create(
+            name=name,
+            description=description,
+            created_by=request.user
+        )
+        messages.success(request, '部门创建成功！')
+        return redirect('org_manage')
+    return render(request, 'core/department_form.html')
+
+@login_required
+def department_edit(request, pk):
+    """编辑部门"""
+    department = get_object_or_404(Department, pk=pk)
+    if request.method == 'POST':
+        department.name = request.POST.get('name')
+        department.description = request.POST.get('description')
+        department.save()
+        messages.success(request, '部门信息已更新！')
+        return redirect('org_manage')
+    return render(request, 'core/department_form.html', {'department': department})
+
+@login_required
+def department_delete(request, pk):
+    """删除部门"""
+    department = get_object_or_404(Department, pk=pk)
+    if request.method == 'POST':
+        # 检查是否有员工关联此部门
+        if Staff.objects.filter(department=department).exists():
+            messages.error(request, '无法删除该部门，因为仍有员工隶属于此。')
+            return redirect('org_manage')
+        department.delete()
+        messages.success(request, '部门已删除！')
+        return redirect('org_manage')
+    return render(request, 'core/department_confirm_delete.html', {'department': department})
+
+@login_required
+def position_create(request):
+    """创建职务"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        Position.objects.create(
+            name=name,
+            description=description,
+            created_by=request.user
+        )
+        messages.success(request, '职务创建成功！')
+        return redirect('org_manage')
+    return render(request, 'core/position_form.html')
+
+@login_required
+def position_edit(request, pk):
+    """编辑职务"""
+    position = get_object_or_404(Position, pk=pk)
+    if request.method == 'POST':
+        position.name = request.POST.get('name')
+        position.description = request.POST.get('description')
+        position.save()
+        messages.success(request, '职务信息已更新！')
+        return redirect('org_manage')
+    return render(request, 'core/position_form.html', {'position': position})
+
+@login_required
+def position_delete(request, pk):
+    """删除职务"""
+    position = get_object_or_404(Position, pk=pk)
+    if request.method == 'POST':
+        # 检查是否有员工关联此职务
+        if Staff.objects.filter(position_link=position).exists():
+            messages.error(request, '无法删除该职务，因为仍有员工担任此职。')
+            return redirect('org_manage')
+        position.delete()
+        messages.success(request, '职务已删除！')
+        return redirect('org_manage')
+    return render(request, 'core/position_confirm_delete.html', {'position': position})
+
+@login_required
 def staff_list(request):
     """员工列表视图函数"""
     # 获取所有员工
@@ -548,24 +663,28 @@ def staff_create(request):
     """添加员工视图函数"""
     # 获取所有部门
     departments = Department.objects.all()
+    # 获取所有职务
+    positions = Position.objects.all()
     
     if request.method == 'POST':
         # 获取表单数据
         name = request.POST['name']
         department_id = request.POST['department']
-        position = request.POST['position']
+        position_id = request.POST['position']
         email = request.POST['email']
         phone = request.POST['phone']
         address = request.POST['address']
         
         # 获取部门对象
         department = Department.objects.get(pk=department_id)
+        # 获取职务对象
+        position = Position.objects.get(pk=position_id) if position_id else None
         
         # 创建员工对象
         staff = Staff(
             name=name,
             department=department,
-            position=position,
+            position_link=position,
             email=email,
             phone=phone,
             address=address,
@@ -579,7 +698,10 @@ def staff_create(request):
         return redirect('staff_list')
     
     # 渲染添加员工模板
-    return render(request, 'core/staff_create.html', {'departments': departments})
+    return render(request, 'core/staff_create.html', {
+        'departments': departments,
+        'positions': positions
+    })
 
 
 @login_required
@@ -589,23 +711,27 @@ def staff_edit(request, pk):
     staff = get_object_or_404(Staff, pk=pk)
     # 获取所有部门
     departments = Department.objects.all()
+    # 获取所有职务
+    positions = Position.objects.all()
     
     if request.method == 'POST':
         # 获取表单数据
         name = request.POST['name']
         department_id = request.POST['department']
-        position = request.POST['position']
+        position_id = request.POST['position']
         email = request.POST['email']
         phone = request.POST['phone']
         address = request.POST['address']
         
         # 获取部门对象
         department = Department.objects.get(pk=department_id)
+        # 获取职务对象
+        position = Position.objects.get(pk=position_id) if position_id else None
         
         # 更新员工对象
         staff.name = name
         staff.department = department
-        staff.position = position
+        staff.position_link = position
         staff.email = email
         staff.phone = phone
         staff.address = address
@@ -617,7 +743,29 @@ def staff_edit(request, pk):
         return redirect('staff_list')
     
     # 渲染编辑员工模板
-    return render(request, 'core/staff_edit.html', {'staff': staff, 'departments': departments})
+    return render(request, 'core/staff_edit.html', {
+        'staff': staff, 
+        'departments': departments,
+        'positions': positions
+    })
+
+
+@login_required
+def staff_delete(request, pk):
+    """删除员工视图函数"""
+    # 获取指定ID的员工，不存在则返回404
+    staff = get_object_or_404(Staff, pk=pk)
+    
+    if request.method == 'POST':
+        # 执行删除操作
+        staff.delete()
+        # 显示成功消息
+        messages.success(request, '员工已成功删除！')
+        # 重定向到员工列表页面
+        return redirect('staff_list')
+    
+    # GET请求时，渲染删除确认页面
+    return render(request, 'core/staff_confirm_delete.html', {'staff': staff})
 
 #方案订单列表视图函数
 @login_required
@@ -630,6 +778,22 @@ def project_order_list(request):
 
 
 @login_required
+def get_client_orders(request):
+    """获取客户相关订单的API接口"""
+    client_id = request.GET.get('client_id')
+    if not client_id:
+        return JsonResponse({'orders': []})
+    
+    try:
+        # 获取该客户的所有订单
+        orders = Order.objects.filter(client_id=client_id)
+        orders_data = [{'id': order.id, 'name': order.name, 'order_id': order.order_id} for order in orders]
+        return JsonResponse({'orders': orders_data})
+    except Exception as e:
+        return JsonResponse({'orders': [], 'error': str(e)})
+
+
+@login_required
 def project_order_create(request):
     """添加方案视图函数"""
     # 获取所有客户
@@ -638,8 +802,10 @@ def project_order_create(request):
     orders = Order.objects.all()
     # 获取所有员工
     staffs = Staff.objects.all()
-    # 获取所有样品
-    samples = Sample.objects.all()
+    # 获取所有样品类型
+    sample_types = SampleType.objects.all()
+    # 获取所有样品类型描述
+    sample_type_descriptions = SampleTypeDescription.objects.all()
     # 获取所有测试类型（Standard模型）
     test_types = Standard.objects.all()
     # 获取所有标准（Standard_radiation_hygiene模型）
@@ -674,10 +840,15 @@ def project_order_create(request):
         for staff_id in staff_ids:
             project_order.staff.add(staff_id)
         
-        # 添加样品
-        sample_ids = request.POST.getlist('samples')
-        for sample_id in sample_ids:
-            project_order.samples.add(sample_id)
+        # 添加样品类型（支持多选）
+        sample_type_ids = request.POST.getlist('sample_types')
+        for sample_type_id in sample_type_ids:
+            project_order.sample_types.add(sample_type_id)
+        
+        # 添加样品类型描述（支持多选）
+        sample_type_description_ids = request.POST.getlist('sample_type_descriptions')
+        for sample_type_description_id in sample_type_description_ids:
+            project_order.sample_type_descriptions.add(sample_type_description_id)
         
         # 添加测试类型
         test_type_ids = request.POST.getlist('test_types')
@@ -699,7 +870,8 @@ def project_order_create(request):
         'clients': clients,
         'orders': orders,
         'staffs': staffs,
-        'samples': samples,
+        'sample_types': sample_types,
+        'sample_type_descriptions': sample_type_descriptions,
         'test_types': test_types,
         'standards': standards
     })
@@ -716,8 +888,10 @@ def project_order_edit(request, pk):
     orders = Order.objects.all()
     # 获取所有员工
     staffs = Staff.objects.all()
-    # 获取所有样品
-    samples = Sample.objects.all()
+    # 获取所有样品类型
+    sample_types = SampleType.objects.all()
+    # 获取所有样品类型描述
+    sample_type_descriptions = SampleTypeDescription.objects.all()
     # 获取所有测试类型（Standard模型）
     test_types = Standard.objects.all()
     # 获取所有标准（Standard_radiation_hygiene模型）
@@ -750,11 +924,17 @@ def project_order_edit(request, pk):
         for staff_id in staff_ids:
             project_order.staff.add(staff_id)
         
-        # 更新样品
-        sample_ids = request.POST.getlist('samples')
-        project_order.samples.clear()
-        for sample_id in sample_ids:
-            project_order.samples.add(sample_id)
+        # 更新样品类型（支持多选）
+        sample_type_ids = request.POST.getlist('sample_types')
+        project_order.sample_types.clear()
+        for sample_type_id in sample_type_ids:
+            project_order.sample_types.add(sample_type_id)
+        
+        # 更新样品类型描述（支持多选）
+        sample_type_description_ids = request.POST.getlist('sample_type_descriptions')
+        project_order.sample_type_descriptions.clear()
+        for sample_type_description_id in sample_type_description_ids:
+            project_order.sample_type_descriptions.add(sample_type_description_id)
         
         # 更新测试类型
         test_type_ids = request.POST.getlist('test_types')
@@ -779,7 +959,8 @@ def project_order_edit(request, pk):
         'clients': clients,
         'orders': orders,
         'staffs': staffs,
-        'samples': samples,
+        'sample_types': sample_types,
+        'sample_type_descriptions': sample_type_descriptions,
         'test_types': test_types,
         'standards': standards
     })
@@ -791,8 +972,10 @@ def project_order_detail(request, pk):
     """项目方案详情视图函数"""
     # 获取指定ID的项目方案订单，不存在则返回404
     project_order = get_object_or_404(Project_Order, pk=pk)
-    # 获取该方案关联的所有样品
-    samples = project_order.samples.all()
+    # 获取该方案关联的所有样品类型
+    sample_types = project_order.sample_types.all()
+    # 获取该方案关联的所有样品类型描述
+    sample_type_descriptions = project_order.sample_type_descriptions.all()
     # 获取该方案关联的所有测试类型
     test_types = project_order.test_types.all()
     # 获取该方案关联的所有标准
@@ -801,7 +984,8 @@ def project_order_detail(request, pk):
     # 渲染项目方案详情模板
     return render(request, 'core/project_order_detail.html', {
         'project_order': project_order,
-        'samples': samples,
+        'sample_types': sample_types,
+        'sample_type_descriptions': sample_type_descriptions,
         'test_types': test_types,
         'standards': standards
     })
@@ -995,8 +1179,10 @@ def report_detail(request, pk):
     report = get_object_or_404(Report, pk=pk)
     # 获取报告关联的方案
     project_order = report.project_order
-    # 获取该方案关联的所有样品
-    samples = project_order.samples.all() if project_order else []
+    # 通过订单获取关联的样品
+    samples = []
+    if project_order and project_order.order:
+        samples = project_order.order.sample_set.all()
     # 获取该报告关联的所有测试结果
     try:
         test_results = report.test_results.all()
@@ -1006,6 +1192,10 @@ def report_detail(request, pk):
     test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
     standards = project_order.standards.all() if project_order else []
+    # 获取该方案关联的所有样品类型
+    sample_types = project_order.sample_types.all() if project_order else []
+    # 获取该方案关联的所有样品类型描述
+    sample_type_descriptions = project_order.sample_type_descriptions.all() if project_order else []
     # 渲染报告详情模板
     return render(request, 'core/report_detail.html', {
         'report': report,
@@ -1013,7 +1203,9 @@ def report_detail(request, pk):
         'samples': samples,
         'test_types': test_types,
         'standards': standards,
-        'test_results': test_results
+        'test_results': test_results,
+        'sample_types': sample_types,
+        'sample_type_descriptions': sample_type_descriptions
     })
 
 
@@ -1023,8 +1215,10 @@ def generate_pdf_report(request, pk):
     report = get_object_or_404(Report, pk=pk)
     # 获取报告关联的方案
     project_order = report.project_order
-    # 获取该方案关联的所有样品
-    samples = project_order.samples.all() if project_order else []
+    # 通过订单获取关联的样品
+    samples = []
+    if project_order and project_order.order:
+        samples = project_order.order.sample_set.all()
     # 获取该报告关联的所有测试结果
     try:
         test_results = report.test_results.all()
@@ -1185,3 +1379,163 @@ def standard_list(request):
     radiation_hygiene = Standard_radiation_hygiene.objects.all()
     # 渲染标准管理模板
     return render(request, 'core/standard.html', {'standards': standards, 'libraries': libraries, 'radiation_hygiene': radiation_hygiene})
+
+
+@login_required
+def sample_type_description_list(request):
+    """样品类型描述列表视图函数"""
+    # 获取所有样品类型描述
+    sample_type_descriptions = SampleTypeDescription.objects.all()
+    # 渲染样品类型描述列表模板
+    return render(request, 'core/sample_type_description_list.html', {'sample_type_descriptions': sample_type_descriptions})
+
+
+@login_required
+def sample_type_description_create(request):
+    """添加样品类型描述视图函数"""
+    # 获取所有样品类型
+    sample_types = SampleType.objects.all()
+    
+    if request.method == 'POST':
+        # 获取表单数据
+        sample_type_id = request.POST['sample_type']
+        description = request.POST['description']
+        
+        # 获取关联对象
+        sample_type = SampleType.objects.get(pk=sample_type_id)
+        
+        # 创建样品类型描述对象
+        sample_type_description = SampleTypeDescription(
+            sample_type=sample_type,
+            description=description,
+            created_by=request.user
+        )
+        sample_type_description.save()
+        
+        # 显示成功消息
+        messages.success(request, '样品类型描述添加成功！')
+        # 重定向到样品类型描述列表页面
+        return redirect('sample_type_description_list')
+    
+    # 渲染添加样品类型描述模板
+    return render(request, 'core/sample_type_description_create.html', {'sample_types': sample_types})
+
+
+@login_required
+def sample_type_description_edit(request, pk):
+    """编辑样品类型描述视图函数"""
+    # 获取指定ID的样品类型描述，不存在则返回404
+    sample_type_description = get_object_or_404(SampleTypeDescription, pk=pk)
+    # 获取所有样品类型
+    sample_types = SampleType.objects.all()
+    
+    if request.method == 'POST':
+        # 获取表单数据
+        sample_type_id = request.POST['sample_type']
+        description = request.POST['description']
+        
+        # 获取关联对象
+        sample_type = SampleType.objects.get(pk=sample_type_id)
+        
+        # 更新样品类型描述对象
+        sample_type_description.sample_type = sample_type
+        sample_type_description.description = description
+        sample_type_description.save()
+        
+        # 显示成功消息
+        messages.success(request, '样品类型描述更新成功！')
+        # 重定向到样品类型描述列表页面
+        return redirect('sample_type_description_list')
+    
+    # 渲染编辑样品类型描述模板
+    return render(request, 'core/sample_type_description_edit.html', {
+        'sample_type_description': sample_type_description,
+        'sample_types': sample_types
+    })
+
+
+@login_required
+def sample_type_description_delete(request, pk):
+    """删除样品类型描述视图函数"""
+    # 获取指定ID的样品类型描述，不存在则返回404
+    sample_type_description = get_object_or_404(SampleTypeDescription, pk=pk)
+    # 删除样品类型描述
+    sample_type_description.delete()
+    # 显示成功消息
+    messages.success(request, '样品类型描述删除成功！')
+    # 重定向到样品类型描述列表页面
+    return redirect('sample_type_description_list')
+
+
+@login_required
+def sample_type_list(request):
+    """样品类型列表视图函数"""
+    # 获取所有样品类型
+    sample_types = SampleType.objects.all()
+    # 渲染样品类型列表模板
+    return render(request, 'core/sample_type_list.html', {'sample_types': sample_types})
+
+
+@login_required
+def sample_type_create(request):
+    """添加样品类型视图函数"""
+    if request.method == 'POST':
+        # 获取表单数据
+        name = request.POST['name']
+        description = request.POST.get('description', '')
+        
+        # 创建样品类型对象
+        sample_type = SampleType(
+            name=name,
+            description=description,
+            created_by=request.user
+        )
+        sample_type.save()
+        
+        # 显示成功消息
+        messages.success(request, '样品类型添加成功！')
+        # 重定向到样品类型列表页面
+        return redirect('sample_type_list')
+    
+    # 渲染添加样品类型模板
+    return render(request, 'core/sample_type_create.html')
+
+
+@login_required
+def sample_type_edit(request, pk):
+    """编辑样品类型视图函数"""
+    # 获取指定ID的样品类型，不存在则返回404
+    sample_type = get_object_or_404(SampleType, pk=pk)
+    
+    if request.method == 'POST':
+        # 获取表单数据
+        name = request.POST['name']
+        description = request.POST.get('description', '')
+        
+        # 更新样品类型对象
+        sample_type.name = name
+        sample_type.description = description
+        sample_type.save()
+        
+        # 显示成功消息
+        messages.success(request, '样品类型更新成功！')
+        # 重定向到样品类型列表页面
+        return redirect('sample_type_list')
+    
+    # 渲染编辑样品类型模板
+    return render(request, 'core/sample_type_edit.html', {'sample_type': sample_type})
+
+
+@login_required
+def sample_type_delete(request, pk):
+    """删除样品类型视图函数"""
+    sample_type = get_object_or_404(SampleType, pk=pk)
+    if request.method == 'POST':
+        sample_type.delete()
+        messages.success(request, '样品类型已成功删除！')
+    return redirect('sample_type_list')
+
+
+def test_view(request):
+    """测试视图函数"""
+    return render(request, 'core/home.html')

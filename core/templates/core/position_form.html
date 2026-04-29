@@ -1,0 +1,35 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{% if position %}编辑职务{% else %}添加职务{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{% if position %}编辑职务：{{ position.name }}{% else %}添加新职务{% endif %}</h1>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="name" class="form-label">职务名称</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ position.name|default:'' }}" required placeholder="例如：高级工程师">
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">职务描述</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="可选填">{{ position.description|default:'' }}</textarea>
+                            </div>
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">{% if position %}保存更改{% else %}创建职务{% endif %}</button>
+                                <a href="{% url 'org_manage' %}" class="btn btn-secondary">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
