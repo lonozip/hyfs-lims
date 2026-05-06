@@ -10,14 +10,28 @@
         </div>
     </div>
 
+    <!-- 搜索框 -->
+    <div class="mb-3">
+        <form method="get" action="{% url 'test_list' %}">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="搜索样本ID、样品类型、样品类型描述、状态、结果、地址信息..." name="search" value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </div>
+        </form>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
+                    <th>测试ID</th>
                     <th>样本ID</th>
-                    <th>测试类型</th>
+                    <th>样品类型</th>
+                    <th>样品类型描述</th>
+                    <th>照片</th>
                     <th>状态</th>
                     <th>结果</th>
+                    <th>地址信息</th>
                     <th>分析人员</th>
                     <th>验证人员</th>
                     <th>分析日期</th>
@@ -28,8 +42,17 @@
             <tbody>
                 {% for test in tests %}
                 <tr>
+                    <td>{{ test.id }}</td>
                     <td>{{ test.sample.sample_id }}</td>
-                    <td>{{ test.test_type.test_name }}</td>
+                    <td>{{ test.sample.sample_type.name|default:"-" }}</td>
+                    <td>{{ test.sample.sample_type_description.description|default:"-" }}</td>
+                    <td>
+                        {% if test.photo %}
+                            <img src="{{ test.photo.url }}" alt="测试照片" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if test.status == 'pending' %}
                             <span class="badge bg-warning">待处理</span>
@@ -42,6 +65,7 @@
                         {% endif %}
                     </td>
                     <td>{{ test.result }}</td>
+                    <td>{{ test.address|truncatechars:20 }}</td>
                     <td>{{ test.analyzed_by.username|default:"-" }}</td>
                     <td>{{ test.verified_by.username|default:"-" }}</td>
                     <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>

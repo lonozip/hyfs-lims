@@ -112,7 +112,7 @@ class Project_OrderAdmin(admin.ModelAdmin):
     search_fields = ('project_id', 'name', 'client__name', 'order__order_id')
     list_filter = ('status', 'client')
     readonly_fields = ('project_id',)
-    filter_horizontal = ('staff', 'sample_types', 'sample_type_descriptions', 'test_types', 'standards')
+    filter_horizontal = ('staff', 'sample_types', 'test_types', 'standards')
 
 class DepartmentAdmin(admin.ModelAdmin):
     """部门模型的Admin配置"""

@@ -19,13 +19,13 @@
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
+                    <th>员工编号</th>
                     <th>人员名称</th>
                     <th>部门</th>
-                <th>职务</th>
-                <th>电子邮件</th>
-                <th>电话</th>
-                <th>地址</th>
-                <th>创建时间</th>
+                    <th>职务</th>
+                    <th>电子邮件</th>
+                    <th>账号状态</th>
+                    <th>创建时间</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -35,12 +35,18 @@
                     data-name="{{ staff.name }}" 
                     data-dept="{{ staff.department.name }}" 
                     data-pos="{{ staff.position_link.name|default:'' }}">
+                    <td>{{ staff.staff_id }}</td>
                     <td>{{ staff.name }}</td>
                     <td>{{ staff.department.name }}</td>
                     <td>{{ staff.position_link.name|default:"未设置" }}</td>
                     <td>{{ staff.email }}</td>
-                    <td>{{ staff.phone }}</td>
-                    <td>{{ staff.address }}</td>
+                    <td>
+                        {% if staff.is_active %}
+                            <span class="badge bg-success">已启用</span>
+                        {% else %}
+                            <span class="badge bg-secondary">未启用</span>
+                        {% endif %}
+                    </td>
                     <td>{{ staff.created_at|date:"Y-m-d H:i" }}</td>
                     <td>
                         <a href="{% url 'staff_edit' staff.id %}" class="btn btn-sm btn-primary">编辑</a>

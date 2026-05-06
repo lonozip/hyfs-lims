@@ -269,11 +269,12 @@
                                     <thead>
                                         <tr>
                                             <th>测试ID</th>
-                                            <th>测试名称</th>
+                                            <th>样品类型描述</th>
                                             <th>样品</th>
+                                            <th>地址</th>
+                                            <th>照片</th>
                                             <th>测试值</th>
-                                            <th>单位</th>
-                                            <th>测试日期</th>
+                                            <th>分析日期</th>
                                             <th>状态</th>
                                         </tr>
                                     </thead>
@@ -281,11 +282,20 @@
                                         {% for test in test_results %}
                                             <tr>
                                                 <td>{{ test.id }}</td>
-                                                <td>{{ test.test_type.test_name }}</td>
+                                                <td>{{ test.sample.sample_type_description.description|default:"-" }}</td>
                                                 <td>{{ test.sample.sample_id }}</td>
-                                                <td>{{ test.result }}</td>
-                                                <td>{{ test.test_type.unit }}</td>
-                                                <td>{{ test.analysis_date|date:"Y-m-d H:i" }}</td>
+                                                <td>{{ test.address|default:"-" }}</td>
+                                                <td>
+                                                    {% if test.photo %}
+                                                        <a href="{{ test.photo.url }}" target="_blank" title="点击查看原图">
+                                                            <img src="{{ test.photo.url }}" alt="测试照片" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                                                        </a>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ test.result|default:"-" }}</td>
+                                                <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
                                                 <td>
                                                     {% if test.status == 'pending' %}
                                                         <span class="badge bg-warning">待处理</span>

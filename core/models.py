@@ -4,6 +4,19 @@ from django.db import models
 from django.contrib.auth.models import User
 # 导入日期时间模块
 from datetime import datetime
+# 导入os模块
+import os
+
+def get_test_image_path(instance, filename):
+    """
+    生成测试图片的存储路径
+    """
+    # 获取文件扩展名
+    ext = filename.split('.')[-1]
+    # 生成新的文件名
+    new_filename = f"test_{instance.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+    # 返回存储路径
+    return os.path.join('test_images', new_filename)
 
 
 def generate_unique_code(prefix, model_class, field_name, date_format='%Y%m%d', seq_length=4):
@@ -170,8 +183,12 @@ class Sample(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='客户')
     # 关联的订单
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True, verbose_name='订单')
+    # 关联的方案
+    project_order = models.ForeignKey('Project_Order', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='方案', related_name='samples')
     # 样品类型
     sample_type = models.ForeignKey(SampleType, on_delete=models.SET_NULL, null=True, verbose_name='样品类型')
+    # 样品类型描述
+    sample_type_description = models.ForeignKey(SampleTypeDescription, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='样品类型描述')
     # 样品编号
     sample_id = models.CharField(max_length=50, unique=True, verbose_name='样品编号')
     # 采集日期
@@ -242,7 +259,7 @@ class Test(models.Model):
     # 关联的样品
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE, verbose_name='样品')
     # 测试类型（现在关联到Standard模型）
-    test_type = models.ForeignKey('standard.Standard', on_delete=models.CASCADE, verbose_name='测试类型')
+    test_type = models.ForeignKey('standard.Standard', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='测试类型')
     # 测试状态
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
     # 测试结果
@@ -255,6 +272,12 @@ class Test(models.Model):
     analysis_date = models.DateTimeField(null=True, blank=True, verbose_name='分析日期')
     # 验证日期
     verification_date = models.DateTimeField(null=True, blank=True, verbose_name='验证日期')
+    # 地址信息
+    address = models.TextField(blank=True, verbose_name='地址信息')
+    # 现场数据
+    field_data = models.TextField(blank=True, verbose_name='现场数据')
+    # 测试照片
+    photo = models.ImageField(upload_to=get_test_image_path, blank=True, null=True, verbose_name='测试照片')
     # 创建时间
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     # 更新时间
@@ -363,8 +386,27 @@ class Staff(models.Model):
     position = models.CharField(max_length=255, default='', verbose_name='职务(旧)')
     # 职务 (新的模型关联)
     position_link = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='职务')
+    
+    # 关联的用户账号
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='关联用户')
+    # 是否启用登录
+    is_active = models.BooleanField(default=False, verbose_name='启用登录')
+    # 权限设置
+    can_manage_clients = models.BooleanField(default=False, verbose_name='客户管理')
+    can_manage_orders = models.BooleanField(default=False, verbose_name='订单管理')
+    can_manage_projects = models.BooleanField(default=False, verbose_name='方案管理')
+    can_manage_samples = models.BooleanField(default=False, verbose_name='样本管理')
+    can_manage_tests = models.BooleanField(default=False, verbose_name='测试管理')
+    can_manage_reports = models.BooleanField(default=False, verbose_name='报告管理')
+    can_manage_staff = models.BooleanField(default=False, verbose_name='员工管理')
+    can_manage_standard = models.BooleanField(default=False, verbose_name='标准管理')
+    can_manage_org = models.BooleanField(default=False, verbose_name='组织架构')
+    can_manage_sample_types = models.BooleanField(default=False, verbose_name='样品类型管理')
+    can_manage_sample_descriptions = models.BooleanField(default=False, verbose_name='样品类型描述')
+    can_access_admin = models.BooleanField(default=False, verbose_name='管理后台')
+    
     # 创建人
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_staff', verbose_name='创建人')
     # 创建时间
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     # 更新时间
@@ -419,6 +461,8 @@ class Project_Order(models.Model):
     sample_types = models.ManyToManyField(SampleType, verbose_name='样品类型')
     # 关联的样品类型描述
     sample_type_descriptions = models.ManyToManyField(SampleTypeDescription, verbose_name='样品类型描述')
+    # 样品描述数量（JSON格式存储）
+    sample_type_description_quantities = models.JSONField(default=dict, blank=True, verbose_name='样品描述数量')
     # 关联的测试类型（现在关联到Standard模型）
     test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='project_order_test_types')
     # 关联的标准

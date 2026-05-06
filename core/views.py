@@ -2,6 +2,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 # 导入登录验证装饰器
 from django.contrib.auth.decorators import login_required
+# 导入权限装饰器
+from .decorators import require_permission
 # 导入请求方法装饰器
 from django.views.decorators.http import require_GET
 # 导入JSON响应模块
@@ -27,6 +29,30 @@ from weasyprint import HTML
 import tempfile
 import os
 from django.contrib.auth import authenticate, login
+
+
+def user_login(request):
+    """自定义登录视图函数"""
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        
+        # 尝试认证
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            if user.is_active:
+                # 登录成功
+                login(request, user)
+                messages.success(request, f'登录成功！欢迎回来，{user.username}')
+                return redirect('home')
+            else:
+                messages.error(request, '账号已被禁用')
+        else:
+            messages.error(request, '用户名或密码错误')
+    
+    # GET请求或登录失败，显示登录页面
+    return render(request, 'core/login.html')
 
 
 def register(request):
@@ -84,23 +110,23 @@ def home(request):
     # 获取报告总数
     total_reports = Report.objects.count()
     
-    # 统计不同状态的样品数量（用于饼图）
-    sample_status_data = Sample.objects.values('status').annotate(count=Count('status'))
-    # 准备样品状态饼图数据：标签（状态）和值（数量）
-    sample_labels = [item['status'] for item in sample_status_data]
-    sample_values = [item['count'] for item in sample_status_data]
-    # 将样品状态数据转换为JSON格式（便于前端JavaScript使用）
+    # 统计不同样品类型的样品数量（用于饼图）
+    sample_type_data = Sample.objects.values('sample_type__name').annotate(count=Count('sample_type'))
+    # 准备样品类型饼图数据：标签（样品类型名称）和值（数量）
+    sample_labels = [item['sample_type__name'] or '未分类' for item in sample_type_data]
+    sample_values = [item['count'] for item in sample_type_data]
+    # 将样品类型数据转换为JSON格式（便于前端JavaScript使用）
     sample_chart_data = {
         'labels': sample_labels,
         'values': sample_values
     }
     
-    # 统计不同状态的订单数量（用于饼图）
-    order_status_data = Order.objects.values('status').annotate(count=Count('status'))
-    # 准备订单状态饼图数据：标签（状态）和值（数量）
-    order_labels = [item['status'] for item in order_status_data]
-    order_values = [item['count'] for item in order_status_data]
-    # 将订单状态数据转换为JSON格式（便于前端JavaScript使用）
+    # 统计不同客户的订单数量（用于饼图）
+    order_client_data = Order.objects.values('client__name').annotate(count=Count('client'))
+    # 准备订单客户饼图数据：标签（客户名称）和值（数量）
+    order_labels = [item['client__name'] or '未知客户' for item in order_client_data]
+    order_values = [item['count'] for item in order_client_data]
+    # 将订单客户数据转换为JSON格式（便于前端JavaScript使用）
     order_chart_data = {
         'labels': order_labels,
         'values': order_values
@@ -117,6 +143,17 @@ def home(request):
         'values': report_values
     }
     
+    # 统计不同状态的测试数量（用于饼图）
+    test_status_data = Test.objects.values('status').annotate(count=Count('status'))
+    # 准备测试状态饼图数据：标签（状态）和值（数量）
+    test_labels = [item['status'] for item in test_status_data]
+    test_values = [item['count'] for item in test_status_data]
+    # 将测试状态数据转换为JSON格式（便于前端JavaScript使用）
+    test_chart_data = {
+        'labels': test_labels,
+        'values': test_values
+    }
+    
     # 准备上下文数据
     context = {
         'total_clients': total_clients,
@@ -127,7 +164,8 @@ def home(request):
         'total_reports': total_reports,
         'sample_chart_data': json.dumps(sample_chart_data),  # 添加样品状态饼图数据
         'order_chart_data': json.dumps(order_chart_data),     # 添加订单状态饼图数据
-        'report_chart_data': json.dumps(report_chart_data)     # 添加报告状态饼图数据
+        'report_chart_data': json.dumps(report_chart_data),   # 添加报告状态饼图数据
+        'test_chart_data': json.dumps(test_chart_data)        # 添加测试状态饼图数据
     }
     
     # 渲染首页模板
@@ -135,6 +173,7 @@ def home(request):
 
 
 @login_required
+@require_permission('can_manage_clients')
 def client_list(request):
     """客户列表视图函数"""
     # 获取搜索关键词
@@ -228,12 +267,30 @@ def client_edit(request, pk):
 
 
 @login_required
+@require_permission('can_manage_samples')
 def sample_list(request):
     """样品列表视图函数"""
-    # 获取所有样品
+    # 获取搜索关键词
+    search_query = request.GET.get('search', '')
+    
+    # 获取所有样品，支持搜索
     samples = Sample.objects.all()
+    
+    if search_query:
+        # 支持按样品ID、客户名称、方案ID、方案名称、订单ID、订单名称、样品类型搜索
+        samples = samples.filter(
+            Q(sample_id__icontains=search_query) |
+            Q(client__name__icontains=search_query) |
+            Q(project_order__project_id__icontains=search_query) |
+            Q(project_order__name__icontains=search_query) |
+            Q(order__order_id__icontains=search_query) |
+            Q(order__name__icontains=search_query) |
+            Q(sample_type__name__icontains=search_query) |
+            Q(sample_type_description__description__icontains=search_query)
+        )
+    
     # 渲染样品列表模板
-    return render(request, 'core/sample_list.html', {'samples': samples})
+    return render(request, 'core/sample_list.html', {'samples': samples, 'search_query': search_query})
 
 
 @login_required
@@ -344,12 +401,53 @@ def sample_edit(request, pk):
 
 
 @login_required
+@require_permission('can_manage_tests')
 def test_list(request):
     """测试列表视图函数"""
+    # 获取所有样品
+    samples = Sample.objects.all()
+    
+    # 为每个没有测试的样品自动创建测试
+    for sample in samples:
+        # 检查该样品是否已有测试
+        existing_tests = Test.objects.filter(sample=sample)
+        if not existing_tests.exists():
+            # 获取样品关联的方案
+            if sample.project_order:
+                # 获取方案关联的测试类型
+                test_types = sample.project_order.test_types.all()
+                # 为每个测试类型创建测试
+                for test_type in test_types:
+                    Test.objects.create(
+                        sample=sample,
+                        test_type=test_type,
+                        status='pending',
+                        address='',
+                        field_data=''
+                    )
+    
+    # 获取搜索关键词
+    search_query = request.GET.get('search', '')
+    
     # 获取所有测试
     tests = Test.objects.all()
+    
+    # 如果有搜索关键词，进行模糊搜索
+    if search_query:
+        from django.db.models import Q
+        tests = tests.filter(
+            Q(sample__sample_id__icontains=search_query) |
+            Q(sample__sample_type__name__icontains=search_query) |
+            Q(sample__sample_type_description__description__icontains=search_query) |
+            Q(status__icontains=search_query) |
+            Q(result__icontains=search_query) |
+            Q(address__icontains=search_query) |
+            Q(analyzed_by__username__icontains=search_query) |
+            Q(verified_by__username__icontains=search_query)
+        )
+    
     # 渲染测试列表模板
-    return render(request, 'core/test_list.html', {'tests': tests})
+    return render(request, 'core/test_list.html', {'tests': tests, 'search_query': search_query})
 
 
 @login_required
@@ -357,15 +455,12 @@ def test_create(request):
     """添加测试视图函数"""
     # 获取所有样品
     samples = Sample.objects.all()
-    # 获取所有标准（测试类型）
-    standards = Standard.objects.all()
     # 获取所有用户（用于分析人员和验证人员选择）
     users = User.objects.all()
     
     if request.method == 'POST':
         # 获取表单数据
         sample_id = request.POST['sample']
-        test_type_id = request.POST['test_type']
         status = request.POST['status']
         result = request.POST.get('result', '')
         analyzed_by_id = request.POST.get('analyzed_by')
@@ -375,8 +470,8 @@ def test_create(request):
         
         # 获取样品对象
         sample = Sample.objects.get(pk=sample_id)
-        # 获取标准对象
-        test_type = Standard.objects.get(pk=test_type_id)
+        # 获取样品关联的测试类型（如果有）
+        test_type = None
         
         # 获取分析人员对象（可为空）
         analyzed_by = None
@@ -397,9 +492,15 @@ def test_create(request):
             analyzed_by=analyzed_by,
             verified_by=verified_by,
             analysis_date=analysis_date if analysis_date else None,
-            verification_date=verification_date if verification_date else None
+            verification_date=verification_date if verification_date else None,
+            address=request.POST.get('address', '')
         )
         test.save()
+        
+        # 处理照片上传
+        if 'photo' in request.FILES:
+            test.photo = request.FILES['photo']
+            test.save()
         
         # 显示成功消息
         messages.success(request, '测试添加成功！')
@@ -409,7 +510,6 @@ def test_create(request):
     # 渲染添加测试模板
     return render(request, 'core/test_create.html', {
         'samples': samples,
-        'standards': standards,
         'users': users
     })
 
@@ -421,15 +521,12 @@ def test_edit(request, pk):
     test = get_object_or_404(Test, pk=pk)
     # 获取所有样品
     samples = Sample.objects.all()
-    # 获取所有标准（测试类型）
-    standards = Standard.objects.all()
     # 获取所有用户（用于分析人员和验证人员选择）
     users = User.objects.all()
     
     if request.method == 'POST':
         # 获取表单数据
         sample_id = request.POST['sample']
-        test_type_id = request.POST['test_type']
         status = request.POST['status']
         result = request.POST.get('result', '')
         analyzed_by_id = request.POST.get('analyzed_by')
@@ -439,8 +536,8 @@ def test_edit(request, pk):
         
         # 获取样品对象
         sample = Sample.objects.get(pk=sample_id)
-        # 获取标准对象
-        test_type = Standard.objects.get(pk=test_type_id)
+        # 获取样品关联的测试类型（如果有）
+        test_type = None
         
         # 获取分析人员对象（可为空）
         analyzed_by = None
@@ -461,10 +558,36 @@ def test_edit(request, pk):
         test.verified_by = verified_by
         test.analysis_date = analysis_date if analysis_date else None
         test.verification_date = verification_date if verification_date else None
+        test.address = request.POST.get('address', '')
         test.save()
         
+        # 处理照片上传
+        if 'photo' in request.FILES:
+            test.photo = request.FILES['photo']
+            test.save()
+        
+        # 更新关联的报告信息
+        if sample.project_order:
+            try:
+                report = Report.objects.get(project_order=sample.project_order)
+                # 更新报告的样品关联
+                report.samples.clear()
+                report.samples.add(*sample.project_order.samples.all())
+                
+                # 更新报告的测试结果关联
+                report.test_results.clear()
+                report.test_results.add(*Test.objects.filter(sample__project_order=sample.project_order))
+                
+                # 更新报告的测试类型关联
+                report.test_types.clear()
+                report.test_types.add(*sample.project_order.test_types.all())
+                
+                report.save()
+            except Report.DoesNotExist:
+                pass
+        
         # 显示成功消息
-        messages.success(request, '测试更新成功！')
+        messages.success(request, '测试更新成功！报告已同步更新。')
         # 重定向到测试列表页面
         return redirect('test_list')
     
@@ -472,11 +595,11 @@ def test_edit(request, pk):
     return render(request, 'core/test_edit.html', {
         'test': test,
         'samples': samples,
-        'standards': standards,
         'users': users
     })
 
 @login_required
+@require_permission('can_manage_orders')
 def order_list(request):
     """订单列表视图函数"""
     # 获取所有订单
@@ -556,8 +679,9 @@ def order_edit(request, pk):
 
 
 
-# 员工列表视图函数
+# 组织架构管理视图函数
 @login_required
+@require_permission('can_manage_org')
 def org_manage(request):
     """组织架构管理视图 (部门和职务)"""
     departments = Department.objects.all()
@@ -650,6 +774,7 @@ def position_delete(request, pk):
     return render(request, 'core/position_confirm_delete.html', {'position': position})
 
 @login_required
+@require_permission('can_manage_staff')
 def staff_list(request):
     """员工列表视图函数"""
     # 获取所有员工
@@ -688,9 +813,35 @@ def staff_create(request):
             email=email,
             phone=phone,
             address=address,
-            created_by=request.user
+            created_by=request.user,
+            # 权限设置
+            is_active=request.POST.get('is_active') == 'on',
+            can_manage_clients=request.POST.get('can_manage_clients') == 'on',
+            can_manage_orders=request.POST.get('can_manage_orders') == 'on',
+            can_manage_projects=request.POST.get('can_manage_projects') == 'on',
+            can_manage_samples=request.POST.get('can_manage_samples') == 'on',
+            can_manage_tests=request.POST.get('can_manage_tests') == 'on',
+            can_manage_reports=request.POST.get('can_manage_reports') == 'on',
+            can_manage_standard=request.POST.get('can_manage_standard') == 'on',
+            can_manage_staff=request.POST.get('can_manage_staff') == 'on',
+            can_manage_org=request.POST.get('can_manage_org') == 'on',
+            can_manage_sample_types=request.POST.get('can_manage_sample_types') == 'on',
+            can_manage_sample_descriptions=request.POST.get('can_manage_sample_descriptions') == 'on',
+            can_access_admin=request.POST.get('can_access_admin') == 'on'
         )
         staff.save()
+        
+        # 如果启用登录，创建用户账号
+        if staff.is_active and email:
+            # 生成默认密码（员工编号）
+            password = staff.staff_id or '123456'
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password
+            )
+            staff.user = user
+            staff.save()
         
         # 显示成功消息
         messages.success(request, '员工添加成功！')
@@ -735,7 +886,39 @@ def staff_edit(request, pk):
         staff.email = email
         staff.phone = phone
         staff.address = address
+        
+        # 更新权限设置
+        staff.is_active = request.POST.get('is_active') == 'on'
+        staff.can_manage_clients = request.POST.get('can_manage_clients') == 'on'
+        staff.can_manage_orders = request.POST.get('can_manage_orders') == 'on'
+        staff.can_manage_projects = request.POST.get('can_manage_projects') == 'on'
+        staff.can_manage_samples = request.POST.get('can_manage_samples') == 'on'
+        staff.can_manage_tests = request.POST.get('can_manage_tests') == 'on'
+        staff.can_manage_reports = request.POST.get('can_manage_reports') == 'on'
+        staff.can_manage_standard = request.POST.get('can_manage_standard') == 'on'
+        staff.can_manage_staff = request.POST.get('can_manage_staff') == 'on'
+        staff.can_manage_org = request.POST.get('can_manage_org') == 'on'
+        staff.can_manage_sample_types = request.POST.get('can_manage_sample_types') == 'on'
+        staff.can_manage_sample_descriptions = request.POST.get('can_manage_sample_descriptions') == 'on'
+        staff.can_access_admin = request.POST.get('can_access_admin') == 'on'
+        
         staff.save()
+        
+        # 如果启用登录且没有关联用户，创建用户账号
+        if staff.is_active and email and not staff.user:
+            password = staff.staff_id or '123456'
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password
+            )
+            staff.user = user
+            staff.save()
+        
+        # 如果禁用登录，禁用关联用户
+        if not staff.is_active and staff.user:
+            staff.user.is_active = False
+            staff.user.save()
         
         # 显示成功消息
         messages.success(request, '员工更新成功！')
@@ -769,6 +952,7 @@ def staff_delete(request, pk):
 
 #方案订单列表视图函数
 @login_required
+@require_permission('can_manage_projects')
 def project_order_list(request):
     """项目方案订单列表视图函数"""
     # 获取所有项目方案订单
@@ -845,10 +1029,37 @@ def project_order_create(request):
         for sample_type_id in sample_type_ids:
             project_order.sample_types.add(sample_type_id)
         
-        # 添加样品类型描述（支持多选）
-        sample_type_description_ids = request.POST.getlist('sample_type_descriptions')
-        for sample_type_description_id in sample_type_description_ids:
-            project_order.sample_type_descriptions.add(sample_type_description_id)
+        # 添加样品类型描述（支持多选，格式为 desc_id:quantity）
+        sample_type_description_data = request.POST.getlist('sample_type_descriptions')
+        quantities = {}
+        for desc_data in sample_type_description_data:
+            # 解析格式 desc_id:quantity
+            parts = desc_data.split(':')
+            desc_id = parts[0]
+            quantity = int(parts[1]) if len(parts) > 1 else 1
+            project_order.sample_type_descriptions.add(desc_id)
+            quantities[desc_id] = quantity
+        
+        # 保存数量信息
+        project_order.sample_type_description_quantities = quantities
+        project_order.save()  # 再次保存以保存数量信息
+        
+        # 根据样品描述和数量自动创建样品
+        from datetime import datetime
+        for desc_id, quantity in quantities.items():
+            try:
+                sample_type_description = SampleTypeDescription.objects.get(pk=desc_id)
+                for i in range(quantity):
+                    Sample.objects.create(
+                        client=client,
+                        order=order,
+                        project_order=project_order,
+                        sample_type=sample_type_description.sample_type,
+                        sample_type_description=sample_type_description,
+                        collection_date=datetime.now()
+                    )
+            except SampleTypeDescription.DoesNotExist:
+                pass
         
         # 添加测试类型
         test_type_ids = request.POST.getlist('test_types')
@@ -860,8 +1071,18 @@ def project_order_create(request):
         for standard_id in standard_ids:
             project_order.standards.add(standard_id)
         
+        # 自动创建报告
+        report = Report.objects.create(
+            project_order=project_order,
+            name=f'{project_order.name} - 报告',
+            description=f'自动生成的报告，关联方案: {project_order.name}',
+            client=client,
+            order=order,
+            created_by=request.user
+        )
+        
         # 显示成功消息
-        messages.success(request, '方案添加成功！')
+        messages.success(request, '方案添加成功！样品和报告已自动创建。')
         # 重定向到方案列表页面
         return redirect('project_order_list')
     
@@ -930,11 +1151,41 @@ def project_order_edit(request, pk):
         for sample_type_id in sample_type_ids:
             project_order.sample_types.add(sample_type_id)
         
-        # 更新样品类型描述（支持多选）
-        sample_type_description_ids = request.POST.getlist('sample_type_descriptions')
+        # 更新样品类型描述（支持多选，格式为 desc_id:quantity）
+        sample_type_description_data = request.POST.getlist('sample_type_descriptions')
         project_order.sample_type_descriptions.clear()
-        for sample_type_description_id in sample_type_description_ids:
-            project_order.sample_type_descriptions.add(sample_type_description_id)
+        quantities = {}
+        for desc_data in sample_type_description_data:
+            # 解析格式 desc_id:quantity
+            parts = desc_data.split(':')
+            desc_id = parts[0]
+            quantity = int(parts[1]) if len(parts) > 1 else 1
+            project_order.sample_type_descriptions.add(desc_id)
+            quantities[desc_id] = quantity
+        
+        # 保存数量信息
+        project_order.sample_type_description_quantities = quantities
+        project_order.save()  # 再次保存以保存数量信息
+        
+        # 根据新的样品描述和数量更新样品（先删除旧样品，再创建新样品）
+        from datetime import datetime
+        # 删除该方案的所有旧样品
+        Sample.objects.filter(project_order=project_order).delete()
+        # 创建新样品
+        for desc_id, quantity in quantities.items():
+            try:
+                sample_type_description = SampleTypeDescription.objects.get(pk=desc_id)
+                for i in range(quantity):
+                    Sample.objects.create(
+                        client=client,
+                        order=order,
+                        project_order=project_order,
+                        sample_type=sample_type_description.sample_type,
+                        sample_type_description=sample_type_description,
+                        collection_date=datetime.now()
+                    )
+            except SampleTypeDescription.DoesNotExist:
+                pass
         
         # 更新测试类型
         test_type_ids = request.POST.getlist('test_types')
@@ -948,10 +1199,32 @@ def project_order_edit(request, pk):
         for standard_id in standard_ids:
             project_order.standards.add(standard_id)
         
+        # 更新关联的报告（如果存在）
+        try:
+            report = Report.objects.get(project_order=project_order)
+            report.name = f'{project_order.name} - 报告'
+            report.description = f'自动生成的报告，关联方案: {project_order.name}'
+            report.client = client
+            report.order = order
+            report.save()
+        except Report.DoesNotExist:
+            # 如果报告不存在，则创建一个新报告
+            Report.objects.create(
+                project_order=project_order,
+                name=f'{project_order.name} - 报告',
+                description=f'自动生成的报告，关联方案: {project_order.name}',
+                client=client,
+                order=order,
+                created_by=request.user
+            )
+        
         # 显示成功消息
-        messages.success(request, '方案更新成功！')
+        messages.success(request, '方案更新成功！样品和报告已自动更新。')
         # 重定向到方案列表页面
         return redirect('project_order_list')
+    
+    # 获取样品描述数量信息
+    sample_type_description_quantities = project_order.sample_type_description_quantities or {}
     
     # 渲染编辑方案模板
     return render(request, 'core/project_order_edit.html', {
@@ -961,6 +1234,7 @@ def project_order_edit(request, pk):
         'staffs': staffs,
         'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions,
+        'sample_type_description_quantities': sample_type_description_quantities,
         'test_types': test_types,
         'standards': standards
     })
@@ -981,11 +1255,15 @@ def project_order_detail(request, pk):
     # 获取该方案关联的所有标准
     standards = project_order.standards.all()
     
+    # 获取样品描述数量信息
+    sample_type_description_quantities = project_order.sample_type_description_quantities or {}
+    
     # 渲染项目方案详情模板
     return render(request, 'core/project_order_detail.html', {
         'project_order': project_order,
         'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions,
+        'sample_type_description_quantities': sample_type_description_quantities,
         'test_types': test_types,
         'standards': standards
     })
@@ -993,6 +1271,7 @@ def project_order_detail(request, pk):
 
 # 添加报告相关视图函数
 @login_required
+@require_permission('can_manage_reports')
 def report_list(request):
     """报告列表视图函数"""
     # 获取所有报告
@@ -1179,15 +1458,14 @@ def report_detail(request, pk):
     report = get_object_or_404(Report, pk=pk)
     # 获取报告关联的方案
     project_order = report.project_order
-    # 通过订单获取关联的样品
+    # 获取本次方案自动生成的样品（仅关联当前方案的样品）
     samples = []
-    if project_order and project_order.order:
-        samples = project_order.order.sample_set.all()
-    # 获取该报告关联的所有测试结果
-    try:
-        test_results = report.test_results.all()
-    except AttributeError:
-        test_results = []
+    if project_order:
+        samples = project_order.samples.all()
+    # 获取本次方案自动生成的测试（仅关联当前方案样品的测试）
+    test_results = []
+    if project_order:
+        test_results = Test.objects.filter(sample__project_order=project_order)
     # 获取该方案关联的所有测试类型
     test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
@@ -1215,15 +1493,14 @@ def generate_pdf_report(request, pk):
     report = get_object_or_404(Report, pk=pk)
     # 获取报告关联的方案
     project_order = report.project_order
-    # 通过订单获取关联的样品
+    # 获取本次方案自动生成的样品（仅关联当前方案的样品）
     samples = []
-    if project_order and project_order.order:
-        samples = project_order.order.sample_set.all()
-    # 获取该报告关联的所有测试结果
-    try:
-        test_results = report.test_results.all()
-    except AttributeError:
-        test_results = []
+    if project_order:
+        samples = project_order.samples.all()
+    # 获取本次方案自动生成的测试（仅关联当前方案样品的测试）
+    test_results = []
+    if project_order:
+        test_results = Test.objects.filter(sample__project_order=project_order)
     # 获取该方案关联的所有测试类型
     test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
@@ -1382,6 +1659,7 @@ def standard_list(request):
 
 
 @login_required
+@require_permission('can_manage_sample_descriptions')
 def sample_type_description_list(request):
     """样品类型描述列表视图函数"""
     # 获取所有样品类型描述
@@ -1468,6 +1746,7 @@ def sample_type_description_delete(request, pk):
 
 
 @login_required
+@require_permission('can_manage_sample_types')
 def sample_type_list(request):
     """样品类型列表视图函数"""
     # 获取所有样品类型

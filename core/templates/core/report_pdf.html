@@ -4,124 +4,160 @@
     <meta charset="UTF-8">
     <title>{{ report.report_id }} - {{ report.name }}</title>
     <style>
-        /* 设置页面的基本样式 */
+        /* 设置页面的基本样式 - 紧凑布局 */
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            font-size: 14px;
+            font-family: "SimHei", "Microsoft YaHei", Arial, sans-serif;
+            margin: 10mm;
+            font-size: 10px;
+            line-height: 1.3;
         }
         /* 设置主标题的样式 */
         h1 {
-            text-align: left;
+            text-align: center;
             color: #000;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-top: 0;
+            margin-bottom: 10px;
         }
         /* 设置副标题的样式 */
         h2 {
             color: #000;
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #000;
-            padding-bottom: 5px;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 3px;
         }
-        /* 设置基本信息容器的样式 */
+        /* 设置基本信息容器的样式 - 紧凑双栏布局 */
         .info-container {
             display: flex;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            column-gap: 20px;
         }
         /* 设置基本信息列的样式 */
         .info-column {
             flex: 1;
-            min-width: 300px;
+            min-width: 200px;
         }
         /* 设置基本信息行的样式 */
         .info-row {
-            margin-bottom: 8px;
+            margin-bottom: 3px;
         }
         /* 设置基本信息标签的样式 */
         .info-label {
             font-weight: bold;
+            display: inline-block;
+            width: 70px;
         }
         /* 设置表格的样式 */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            font-size: 10px;
         }
-        /* 设置表格单元格的样式 */
+        /* 设置表格单元格的样式 - 紧凑padding */
         th, td {
-            border: 1px solid #000;
-            padding: 8px;
+            border: 1px solid #333;
+            padding: 3px 5px;
             text-align: left;
+            white-space: nowrap;
         }
         /* 设置表头的样式 */
         th {
-            background-color: #f2f2f2;
+            background-color: #f5f5f5;
             font-weight: bold;
+            font-size: 10px;
         }
         /* 设置表格内容的样式 */
         td {
-            vertical-align: top;
+            vertical-align: middle;
         }
         /* 设置关联标准表格的样式 */
         .standard-table td {
-            font-size: 12px;
-            word-wrap: break-word;
+            font-size: 9px;
         }
         /* 设置分隔线的样式 */
         .separator {
-            border-bottom: 1px solid #000;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        /* 设置照片缩略图样式 - 更小尺寸 */
+        .photo-thumbnail {
+            max-width: 40px;
+            max-height: 40px;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+        /* 设置地址列宽度 - 紧凑 */
+        .address-col {
+            max-width: 100px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        /* 设置日期列样式 */
+        .date-col {
+            width: 80px;
+        }
+        /* 设置状态列样式 */
+        .status-col {
+            width: 50px;
+        }
+        /* 设置表格行高度 */
+        tr {
+            height: 20px;
+        }
+        /* 优化偶数行背景 */
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        /* 页脚样式 */
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 9px;
+            text-align: center;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <!-- 报告标题 -->
-    <h1>报告详情</h1>
+    <h1>检测报告</h1>
     
     <!-- 基本信息 -->
     <h2>基本信息</h2>
     <div class="info-container">
         <div class="info-column">
             <div class="info-row">
-                <span class="info-label">方案ID:</span> {{ project_order.project_id }}
+                <span class="info-label">方案ID:</span> {{ project_order.project_id|default:"-" }}
             </div>
             <div class="info-row">
-                <span class="info-label">方案名称:</span> {{ project_order.name }}
+                <span class="info-label">方案名称:</span> {{ project_order.name|default:"-" }}
             </div>
             <div class="info-row">
-                <span class="info-label">客户:</span> {{ project_order.client.name }}
+                <span class="info-label">客户:</span> {{ project_order.client.name|default:"-" }}
             </div>
             <div class="info-row">
-                <span class="info-label">订单编号:</span> {{ project_order.order.order_id }}
+                <span class="info-label">订单编号:</span> {{ project_order.order.order_id|default:"-" }}
             </div>
+        </div>
+        <div class="info-column">
             <div class="info-row">
                 <span class="info-label">报告编号:</span> {{ report.report_id }}
             </div>
             <div class="info-row">
                 <span class="info-label">报告名称:</span> {{ report.name }}
             </div>
-        </div>
-        <div class="info-column">
             <div class="info-row">
                 <span class="info-label">报告状态:</span> {{ report.get_status_display }}
             </div>
             <div class="info-row">
-                <span class="info-label">方案描述:</span> {{ project_order.description }}
-            </div>
-            <div class="info-row">
-                <span class="info-label">创建人:</span> {{ report.created_by.username }}
-            </div>
-            <div class="info-row">
-                <span class="info-label">创建时间:</span> {{ report.created_at|date:"Y-m-d H:i:s" }}
-            </div>
-            <div class="info-row">
-                <span class="info-label">更新时间:</span> {{ report.updated_at|date:"Y-m-d H:i:s" }}
+                <span class="info-label">创建时间:</span> {{ report.created_at|date:"Y-m-d H:i" }}
             </div>
         </div>
     </div>
@@ -133,6 +169,8 @@
         <thead>
             <tr>
                 <th>样品编号</th>
+                <th>客户</th>
+                <th>订单编号</th>
                 <th>样品类型</th>
                 <th>采集日期</th>
                 <th>接收日期</th>
@@ -140,19 +178,23 @@
             </tr>
         </thead>
         <tbody>
-            <!-- 遍历样品列表，显示每个样品的信息 -->
             {% for sample in samples %}
                 <tr>
-                    <td>{{ sample.sample_id }}</td>      
-                    <td>{{ sample.sample_type.name }}</td>
-                    <td>{{ sample.collection_date|date:"Y-m-d" }}</td>
-                    <td>{{ sample.received_date|date:"Y-m-d H:i" }}</td>
-                    <td>{{ sample.get_status_display }}</td>
+                    <td>{{ sample.sample_id }}</td>
+                    <td>{{ sample.client.name|default:"-" }}</td>
+                    <td>{{ sample.order.order_id|default:"-" }}</td>
+                    <td>{{ sample.sample_type.name|default:"-" }}</td>
+                    <td class="date-col">{{ sample.collection_date|date:"Y-m-d" }}</td>
+                    <td class="date-col">{{ sample.received_date|date:"Y-m-d H:i" }}</td>
+                    <td class="status-col">{{ sample.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">该报告未关联任何样品</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="separator"></div>
     
     <!-- 测试类型表格 -->
     <h2>测试类型</h2>
@@ -165,17 +207,19 @@
             </tr>
         </thead>
         <tbody>
-            <!-- 遍历测试类型列表，显示每个测试类型的信息 -->
             {% for test_type in test_types %}
                 <tr>
                     <td>{{ test_type.test_name }}</td>
-                    <td>{{ test_type.unit }}</td>
-                    <td>{{ test_type.reference_range }}</td>
+                    <td>{{ test_type.unit|default:"-" }}</td>
+                    <td>{{ test_type.reference_range|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center;">该方案未关联任何测试类型</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="separator"></div>
     
     <!-- 关联标准表格 -->
     <h2>关联标准</h2>
@@ -185,26 +229,24 @@
                 <th>标准编号</th>
                 <th>标准名称</th>
                 <th>标准类型</th>
-                <th>发布日期</th>
-                <th>实施日期</th>
                 <th>状态</th>
             </tr>
         </thead>
         <tbody>
-            <!-- 遍历标准列表，显示每个标准的信息 -->
             {% for standard in standards %}
                 <tr>
                     <td>{{ standard.standard_id }}</td>
                     <td>{{ standard.name }}</td>
                     <td>{{ standard.standard_type }}</td>
-                    <td>{{ standard.collection_date|date:"Y-m-d" }}</td>
-                    <td></td>
-                    <td>{{ standard.status }}</td>
+                    <td>{{ standard.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">该方案未关联任何标准</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="separator"></div>
     
     <!-- 测试结果表格 -->
     <h2>测试结果</h2>
@@ -212,28 +254,44 @@
         <thead>
             <tr>
                 <th>测试ID</th>
-                <th>测试名称</th>
+                <th>样品类型描述</th>
                 <th>样品</th>
+                <th>地址</th>
+                <th>照片</th>
                 <th>测试值</th>
-                <th>单位</th>
-                <th>测试日期</th>
+                <th>分析日期</th>
                 <th>状态</th>
             </tr>
         </thead>
         <tbody>
-            <!-- 遍历测试结果列表，显示每个测试结果的信息 -->
             {% for test in test_results %}
                 <tr>
                     <td>{{ test.id }}</td>
-                    <td>{{ test.test_type.test_name }}</td>
+                    <td>{{ test.sample.sample_type_description.description|default:"-" }}</td>
                     <td>{{ test.sample.sample_id }}</td>
-                    <td>{{ test.result }}</td>
-                    <td>{{ test.test_type.unit }}</td>
-                    <td>{{ test.analysis_date|date:"Y-m-d H:i" }}</td>
-                    <td>{{ test.get_status_display }}</td>
+                    <td class="address-col">{{ test.address|default:"-" }}</td>
+                    <td>
+                        {% if test.photo %}
+                            <img src="{{ test.photo.path }}" alt="测试照片" class="photo-thumbnail">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ test.result|default:"-" }}</td>
+                    <td class="date-col">{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
+                    <td class="status-col">{{ test.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center;">该报告未关联任何测试结果</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    <!-- 页脚 -->
+    <div class="footer">
+        报告生成时间: {{ report.updated_at|date:"Y-m-d H:i:s" }}
+    </div>
 </body>
 </html>

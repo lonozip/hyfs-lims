@@ -312,6 +312,12 @@
             let currentSampleTypeId = null;
             // 当前弹窗中选中的描述ID列表
             let selectedDescIds = [];
+            // 样品描述数量映射
+            const sampleTypeDescriptionQuantities = {
+                {% for key, value in sample_type_description_quantities.items %}
+                    '{{ key }}': '{{ value }}',
+                {% endfor %}
+            };
 
             // 客户选择联动订单（使用jQuery监听Select2事件）
             // 保存当前选中的订单ID
@@ -411,13 +417,17 @@
                 
                 descriptions.forEach(desc => {
                     const isSelected = selectedDescIds.includes(desc.id.toString());
+                    // 获取已保存的数量，如果没有则默认为1（如果选中）或0（如果未选中）
+                    const quantity = sampleTypeDescriptionQuantities[desc.id.toString()] || (isSelected ? '1' : '0');
                     const div = document.createElement('div');
                     div.className = `form-check p-1 border-bottom ${isSelected ? 'bg-light' : ''}`;
                     div.innerHTML = `
-                        <label class="form-check-label w-full d-flex justify-content-between">
+                        <div class="w-full d-flex justify-content-between align-items-center">
                             <span>${desc.description}</span>
-                            <input class="form-check-input desc-checkbox" type="checkbox" data-desc-id="${desc.id}" data-sample-type-id="${sampleTypeId}" ${isSelected ? 'checked' : ''}>
-                        </label>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <input type="number" class="form-control desc-quantity" min="0" value="${quantity}" data-desc-id="${desc.id}" data-sample-type-id="${sampleTypeId}">
+                            </div>
+                        </div>
                     `;
                     container.appendChild(div);
                 });
@@ -425,16 +435,24 @@
 
             // 确认选择按钮点击事件
             document.getElementById('confirmDescriptionsBtn').addEventListener('click', function() {
-                // 获取弹窗中选中的描述
-                const checkboxes = document.querySelectorAll('.desc-checkbox:checked');
-                const newDescIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-desc-id'));
+                // 获取弹窗中数量大于0的描述
+                const quantityInputs = document.querySelectorAll('.desc-quantity');
+                const selectedDescData = Array.from(quantityInputs)
+                    .filter(input => {
+                        const quantity = parseInt(input.value) || 0;
+                        return quantity > 0;
+                    })
+                    .map(input => {
+                        const descId = input.getAttribute('data-desc-id');
+                        const quantity = parseInt(input.value) || 1;
+                        return { id: descId, quantity: quantity };
+                    });
                 
                 // 移除该样品类型之前的所有描述
                 removeDescriptionsBySampleType(currentSampleTypeId);
                 
                 // 添加新选中的描述
                 const descriptions = sampleTypeDescriptionsMap[currentSampleTypeId] || [];
-                const selectedDescriptions = descriptions.filter(d => newDescIds.includes(d.id.toString()));
                 
                 const selectedContainer = document.getElementById('selected-descriptions');
                 
@@ -453,16 +471,19 @@
                 
                 const descGroup = document.getElementById(`desc-group-${currentSampleTypeId}`);
                 
-                selectedDescriptions.forEach(desc => {
+                selectedDescData.forEach(data => {
+                    const desc = descriptions.find(d => d.id.toString() === data.id);
+                    if (!desc) return;
+                    
                     const tag = document.createElement('span');
                     tag.className = 'badge bg-secondary m-1 selected-desc-tag';
                     tag.setAttribute('data-desc-id', desc.id);
-                    tag.innerHTML = `${desc.description} <span class="remove-desc" data-desc-id="${desc.id}">&times;</span>`;
+                    tag.innerHTML = `${desc.description} (${data.quantity}个) <span class="remove-desc" data-desc-id="${desc.id}">&times;</span>`;
                     
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
                     hiddenInput.name = 'sample_type_descriptions';
-                    hiddenInput.value = desc.id;
+                    hiddenInput.value = `${desc.id}:${data.quantity}`;
                     
                     descGroup.appendChild(tag);
                     descGroup.appendChild(hiddenInput);
@@ -480,7 +501,7 @@
                 
                 // 更新选中的描述ID列表
                 selectedDescIds = document.querySelectorAll('input[name="sample_type_descriptions"]');
-                selectedDescIds = Array.from(selectedDescIds).map(input => input.value);
+                selectedDescIds = Array.from(selectedDescIds).map(input => input.value.split(':')[0]);
             });
 
             // 根据样品类型ID移除描述

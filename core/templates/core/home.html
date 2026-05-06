@@ -144,12 +144,20 @@
         </div>
     </div>
 
-    <!-- 饼图容器 - 报告状态 -->
+    <!-- 饼图容器 - 报告状态和测试状态 -->
     <div class="row mb-4">
         <div class="col-md-6">
             <h3 class="h5 mt-3 mb-3">报告状态分布</h3>
             <div class="mb-4" style="height: 350px; width: 100%; max-width: 600px; margin: 20px auto;">
                 <canvas id="reportStatusChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 饼图容器 - 测试状态 -->
+        <div class="col-md-6">
+            <h3 class="h5 mt-3 mb-3">测试状态分布</h3>
+            <div class="mb-4" style="height: 350px; width: 100%; max-width: 600px; margin: 20px auto;">
+                <canvas id="testStatusChart"></canvas>
             </div>
         </div>
     </div>
@@ -165,8 +173,18 @@
         const sampleChartData = JSON.parse('{{ sample_chart_data|safe }}');
         const orderChartData = JSON.parse('{{ order_chart_data|safe }}');
         const reportChartData = JSON.parse('{{ report_chart_data|safe }}');
+        const testChartData = JSON.parse('{{ test_chart_data|safe }}');
         
-        // 为不同状态设置更友好的标签和颜色
+        // 预定义的颜色数组 - 为不同数据项分配不同颜色
+        const chartColors = [
+            '#FF6384', '#36A2EB', '#4BC0C0', '#FFCE56', 
+            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+            '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD',
+            '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+            '#F8B500', '#FF69B4', '#00CED1', '#FF7F50'
+        ];
+        
+        // 为不同状态设置更友好的标签
         const statusLabels = {
             'pending': '待处理',
             'in_progress': '处理中',
@@ -174,17 +192,15 @@
             'cancelled': '已取消'
         };
         
-        const statusColors = {
-            'pending': '#FF6384',
-            'in_progress': '#36A2EB',
-            'completed': '#4BC0C0',
-            'cancelled': '#FFCE56'
-        };
-        
-        // 辅助函数：格式化饼图数据
-        function formatChartData(chartData) {
-            const formattedLabels = chartData.labels.map(label => statusLabels[label] || label);
-            const formattedColors = chartData.labels.map(label => statusColors[label] || '#999999');
+        // 辅助函数：格式化饼图数据 - 为每个标签分配不同颜色
+        function formatChartData(chartData, isStatusChart = false) {
+            const formattedLabels = isStatusChart 
+                ? chartData.labels.map(label => statusLabels[label] || label)
+                : chartData.labels;
+            // 为每个数据项分配不同颜色
+            const formattedColors = chartData.labels.map((label, index) => {
+                return chartColors[index % chartColors.length];
+            });
             return {
                 labels: formattedLabels,
                 colors: formattedColors
@@ -279,8 +295,8 @@
             }
         });
 
-        // 格式化报告状态数据
-        const formattedReportData = formatChartData(reportChartData);
+        // 格式化报告状态数据 - 报告状态图表需要使用状态标签
+        const formattedReportData = formatChartData(reportChartData, true);
         
         // 初始化报告状态饼图
         const reportCtx = document.getElementById('reportStatusChart').getContext('2d');
@@ -291,6 +307,50 @@
                 datasets: [{
                     data: reportChartData.values,
                     backgroundColor: formattedReportData.colors,
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 格式化测试状态数据 - 测试状态图表需要使用状态标签
+        const formattedTestData = formatChartData(testChartData, true);
+        
+        // 初始化测试状态饼图
+        const testCtx = document.getElementById('testStatusChart').getContext('2d');
+        const testStatusChart = new Chart(testCtx, {
+            type: 'pie',
+            data: {
+                labels: formattedTestData.labels,
+                datasets: [{
+                    data: testChartData.values,
+                    backgroundColor: formattedTestData.colors,
                     borderWidth: 1,
                     borderColor: '#ffffff'
                 }]

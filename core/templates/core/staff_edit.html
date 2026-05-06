@@ -21,6 +21,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">联系方式</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab" aria-controls="account" aria-selected="false">账号管理</button>
+                        </li>
                     </ul>
 
                     <!-- 选项卡内容 -->
@@ -43,7 +46,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="position" class="form-label">职务</label>
-                                        <select class="form-select" id="position" name="position" required>
+                                        <select class="form-select" id="position" name="position">
                                             <option value="">请选择职务</option>
                                             {% for position in positions %}
                                                 <option value="{{ position.id }}" {% if position.id == staff.position_link_id %}selected{% endif %}>{{ position.name }}</option>
@@ -69,6 +72,106 @@
                                     <div class="mb-3">
                                         <label for="address" class="form-label">地址</label>
                                         <textarea class="form-control" id="address" name="address" rows="3" required>{{ staff.address }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 账号管理页面 -->
+                        <div class="tab-pane fade" id="account" role="tabpanel" aria-labelledby="account-tab">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-4">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if staff.is_active %}checked{% endif %}>
+                                            <label class="form-check-label" for="is_active">启用登录账号</label>
+                                        </div>
+                                        {% if staff.user %}
+                                        <p class="text-muted text-sm">关联账号: {{ staff.user.username }}</p>
+                                        {% endif %}
+                                        <p class="text-muted text-sm">启用后将自动创建用户账号，初始密码为员工编号</p>
+                                    </div>
+                                    
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5>系统权限</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_clients" name="can_manage_clients" {% if staff.can_manage_clients %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_clients">客户管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_orders" name="can_manage_orders" {% if staff.can_manage_orders %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_orders">订单管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_projects" name="can_manage_projects" {% if staff.can_manage_projects %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_projects">方案管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_samples" name="can_manage_samples" {% if staff.can_manage_samples %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_samples">样本管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_tests" name="can_manage_tests" {% if staff.can_manage_tests %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_tests">测试管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_reports" name="can_manage_reports" {% if staff.can_manage_reports %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_reports">报告管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_standard" name="can_manage_standard" {% if staff.can_manage_standard %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_standard">标准管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_staff" name="can_manage_staff" {% if staff.can_manage_staff %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_staff">员工管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_org" name="can_manage_org" {% if staff.can_manage_org %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_org">组织架构</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_sample_types" name="can_manage_sample_types" {% if staff.can_manage_sample_types %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_sample_types">样品类型管理</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_manage_sample_descriptions" name="can_manage_sample_descriptions" {% if staff.can_manage_sample_descriptions %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_manage_sample_descriptions">样品类型描述</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="can_access_admin" name="can_access_admin" {% if staff.can_access_admin %}checked{% endif %}>
+                                                        <label class="form-check-label" for="can_access_admin">管理后台</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

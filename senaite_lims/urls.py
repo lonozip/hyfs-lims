@@ -32,7 +32,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 测试视图URL
     path('test/', test_view, name='test_view'),
-    path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
+    path('login/', views.user_login, name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     # 样品类型描述列表URL
     path('sample_type_descriptions/', views.sample_type_description_list, name='sample_type_description_list'),

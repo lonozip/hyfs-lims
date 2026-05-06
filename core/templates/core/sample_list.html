@@ -10,14 +10,28 @@
         </div>
     </div>
 
+    <!-- 搜索框 -->
+    <div class="mb-4">
+        <form method="GET" action="{% url 'sample_list' %}" class="form-inline">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search" placeholder="搜索样品ID、客户、方案ID、订单ID、样品类型..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </div>
+        </form>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-striped table-sm">
             <thead>
                 <tr>
                     <th>样本ID</th>
                     <th>客户</th>
-                    <th>订单编号</th>
+                    <th>方案ID</th>
+                    <th>方案名称</th>
+                    <th>订单ID</th>
+                    <th>订单名称</th>
                     <th>样本类型</th>
+                    <th>样品描述</th>
                     <th>采集日期</th>
                     <th>接收日期</th>
                     <th>状态</th>
@@ -29,8 +43,12 @@
                 <tr>
                     <td>{{ sample.sample_id }}</td>
                     <td>{{ sample.client.name }}</td>
-                    <td>{{ sample.order.order_id|default:'无订单' }}</td>
-                    <td>{{ sample.sample_type.name }}</td>
+                    <td>{{ sample.project_order.project_id|default:'-' }}</td>
+                    <td>{{ sample.project_order.name|default:'-' }}</td>
+                    <td>{{ sample.order.order_id|default:'-' }}</td>
+                    <td>{{ sample.order.name|default:'-' }}</td>
+                    <td>{{ sample.sample_type.name|default:'-' }}</td>
+                    <td>{{ sample.sample_type_description.description|default:'-' }}</td>
                     <td>{{ sample.collection_date|date:"Y-m-d H:i" }}</td>
                     <td>{{ sample.received_date|date:"Y-m-d H:i" }}</td>
                     <td>

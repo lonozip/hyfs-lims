@@ -10,7 +10,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="sample" class="form-label">样品</label>
@@ -21,12 +21,12 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="test_type" class="form-label">测试类型</label>
-                        <select class="form-select" id="test_type" name="test_type" required>
-                            {% for standard in standards %}
-                                <option value="{{ standard.id }}" {% if standard.id == test.test_type.id %}selected{% endif %}>{{ standard.standard_id }} - {{ standard.test_name }}</option>
-                            {% endfor %}
-                        </select>
+                        <label class="form-label">样品类型</label>
+                        <input type="text" class="form-control" value="{{ test.sample.sample_type.name|default:"-" }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">样品类型描述</label>
+                        <input type="text" class="form-control" value="{{ test.sample.sample_type_description.description|default:"-" }}" readonly>
                     </div>
                     <div class="mb-3">
                         <label for="status" class="form-label">状态</label>
@@ -40,6 +40,19 @@
                     <div class="mb-3">
                         <label for="result" class="form-label">测试结果</label>
                         <input type="text" class="form-control" id="result" name="result" value="{{ test.result }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">地址信息</label>
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ test.address }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">测试照片</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                        {% if test.photo %}
+                            <div class="mt-2">
+                                <img src="{{ test.photo.url }}" alt="测试照片" style="max-width: 200px; max-height: 200px;">
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="mb-3">
                         <label for="analyzed_by" class="form-label">分析人员</label>
