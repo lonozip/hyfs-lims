@@ -231,6 +231,7 @@
                                             <th>地址</th>
                                             <th>照片</th>
                                             <th>测试值</th>
+                                            <th>量纲</th>
                                             <th>分析日期</th>
                                             <th>状态</th>
                                         </tr>
@@ -252,6 +253,7 @@
                                                     {% endif %}
                                                 </td>
                                                 <td>{{ test.result|default:"-" }}</td>
+                                                <td>{{ test.unit|default:"-" }}</td>
                                                 <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
                                                 <td>
                                                     {% if test.status == 'pending' %}

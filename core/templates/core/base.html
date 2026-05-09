@@ -122,6 +122,13 @@
                             </a>
                         </li>
                         {% endif %}
+                        {% if staff_permissions.can_manage_samples %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/import_templates/' %}active{% endif %}" href="{% url 'import_template_list' %}">
+                                导入模板管理
+                            </a>
+                        </li>
+                        {% endif %}
 
                         {% if staff_permissions.can_access_admin %}
                         <li class="nav-item">

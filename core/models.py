@@ -19,6 +19,18 @@ def get_test_image_path(instance, filename):
     return os.path.join('test_images', new_filename)
 
 
+def get_import_template_path(instance, filename):
+    """
+    生成导入模板文件的存储路径
+    """
+    # 获取文件扩展名
+    ext = filename.split('.')[-1]
+    # 生成新的文件名
+    new_filename = f"template_{instance.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+    # 返回存储路径
+    return os.path.join('import_templates', new_filename)
+
+
 def generate_unique_code(prefix, model_class, field_name, date_format='%Y%m%d', seq_length=4):
     """
     生成基于时间日期的唯一编号
@@ -110,6 +122,10 @@ class SampleTypeDescription(models.Model):
     sample_type = models.ForeignKey(SampleType, on_delete=models.CASCADE, verbose_name='样品类型')
     # 描述内容
     description = models.TextField(blank=True, verbose_name='描述内容')
+    # 量纲（显示用）
+    unit = models.CharField(max_length=50, blank=True, verbose_name='量纲')
+    # 基础单位（用于换算）
+    base_unit = models.CharField(max_length=50, blank=True, verbose_name='基础单位')
     # 创建人
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
     # 创建时间
@@ -120,6 +136,15 @@ class SampleTypeDescription(models.Model):
     def __str__(self):
         """返回样品类型描述作为字符串表示"""
         return self.description
+
+    def get_converted_unit(self, target_prefix):
+        """
+        将基础单位转换为目标数量级
+        :param target_prefix: 目标数量级前缀
+        :return: 转换后的单位字符串
+        """
+        from .unit_converter import format_unit
+        return format_unit(target_prefix, self.base_unit)
 
     class Meta:
         verbose_name = '样品类型描述'
@@ -262,6 +287,12 @@ class Test(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
     # 测试结果
     result = models.CharField(max_length=100, blank=True, verbose_name='测试结果')
+    # 量纲（显示用）
+    unit = models.CharField(max_length=50, blank=True, verbose_name='量纲')
+    # 基础单位（用于换算）
+    base_unit = models.CharField(max_length=50, blank=True, verbose_name='基础单位')
+    # 基础值（存储基础单位下的值）
+    base_value = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True, verbose_name='基础值')
     # 分析人员
     analyzed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='analyzed_tests', verbose_name='分析人员')
     # 验证人员
@@ -276,14 +307,96 @@ class Test(models.Model):
     field_data = models.TextField(blank=True, verbose_name='现场数据')
     # 测试照片
     photo = models.ImageField(upload_to=get_test_image_path, blank=True, null=True, verbose_name='测试照片')
+    
+    # 辐射剂量率专用字段
+    # 点位描述
+    point_description = models.CharField(max_length=255, blank=True, verbose_name='点位描述')
+    # 经度（E）
+    longitude = models.DecimalField(max_digits=15, decimal_places=10, null=True, blank=True, verbose_name='经度（E）')
+    # 纬度（N）
+    latitude = models.DecimalField(max_digits=15, decimal_places=10, null=True, blank=True, verbose_name='纬度（N）')
+    # 高程（H）
+    elevation = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='高程（H）')
+    # 仪器示值Rγ(1-5)
+    r_gamma_1 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(1)')
+    r_gamma_2 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(2)')
+    r_gamma_3 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(3)')
+    r_gamma_4 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(4)')
+    r_gamma_5 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(5)')
+    # 宇宙射线
+    cosmic_ray = models.FloatField(null=True, blank=True, verbose_name='宇宙射线')
+    # k3
+    k3 = models.FloatField(null=True, blank=True, verbose_name='k3')
+    # 平均值
+    avg_value = models.FloatField(null=True, blank=True, verbose_name='平均值')
+    # 标准差
+    std_value = models.FloatField(null=True, blank=True, verbose_name='标准差')
+    # 备注
+    remark = models.TextField(blank=True, verbose_name='备注')
+    
     # 创建时间
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     # 更新时间
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     def __str__(self):
-        """返回样品编号作为字符串表示"""
-        return f"{self.sample.sample_id}"
+        """返回样品编号和状态作为字符串表示"""
+        return f"{self.sample.sample_id} - {self.get_status_display()}"
+
+    def convert_to_unit(self, target_unit):
+        """
+        将基础值转换为目标单位的值
+        :param target_unit: 目标单位字符串
+        :return: 转换后的值
+        """
+        from .unit_converter import convert_from_base_unit
+        if self.base_value is not None and self.base_unit:
+            return convert_from_base_unit(self.base_value, target_unit)
+        return None
+
+    def convert_from_unit(self, value, source_unit):
+        """
+        将指定单位的值转换为基础单位值
+        :param value: 原始值
+        :param source_unit: 原始单位
+        :return: 基础单位下的值
+        """
+        from .unit_converter import convert_to_base_unit
+        base_value, base_unit = convert_to_base_unit(value, source_unit)
+        return base_value
+
+    def set_result_with_unit(self, value, unit):
+        """
+        设置测试结果和单位，同时计算并存储基础值
+        :param value: 测试结果值
+        :param unit: 单位字符串
+        """
+        from .unit_converter import convert_to_base_unit, parse_unit
+        
+        self.result = str(value) if value else ''
+        self.unit = unit
+        
+        if value and unit:
+            base_value, base_unit = convert_to_base_unit(value, unit)
+            self.base_value = base_value
+            self.base_unit = base_unit
+        else:
+            self.base_value = None
+            self.base_unit = ''
+
+    def get_converted_result(self, target_unit):
+        """
+        获取转换到目标单位的测试结果
+        :param target_unit: 目标单位字符串
+        :return: (转换后的值, 目标单位)
+        """
+        from .unit_converter import convert_from_base_unit
+        
+        if self.base_value is not None and self.base_unit:
+            converted_value = convert_from_base_unit(self.base_value, target_unit)
+            if converted_value is not None:
+                return (converted_value, target_unit)
+        return (self.result, self.unit)
 
     class Meta:
         verbose_name = '测试记录'
@@ -464,8 +577,24 @@ class Project_Order(models.Model):
     # 关联的标准
     standards = models.ManyToManyField('standard.Standard_radiation_hygiene', verbose_name='标准', related_name='project_order_standards')
     
+    # 辐射测量基本信息（用于 X、γ辐射剂量率测量）
+    radiation_project_name = models.CharField(max_length=255, blank=True, verbose_name='项目名称')
+    radiation_monitoring_date = models.CharField(max_length=50, blank=True, verbose_name='监测日期')
+    radiation_location = models.CharField(max_length=255, blank=True, verbose_name='监测地点')
+    radiation_weather = models.CharField(max_length=100, blank=True, verbose_name='天气状况')
+    radiation_basis = models.CharField(max_length=255, blank=True, verbose_name='监测依据')
+    radiation_temperature = models.CharField(max_length=20, blank=True, verbose_name='温度')
+    radiation_humidity = models.CharField(max_length=20, blank=True, verbose_name='湿度')
+    radiation_conditions = models.TextField(blank=True, verbose_name='测量工况')
+    
+    # 宇宙射线信息（JSON 格式存储）
+    cosmic_ray_info = models.JSONField(default=list, blank=True, verbose_name='宇宙射线信息')
+    
+    # 仪器信息（JSON 格式存储）
+    instrument_info = models.JSONField(default=list, blank=True, verbose_name='仪器信息')
+    
     def save(self, *args, **kwargs):
-        """重写save方法，自动生成方案编号"""
+        """重写 save 方法，自动生成方案编号"""
         if not self.project_id:  # 只有在创建新对象时才生成编号
             self.project_id = generate_unique_code('PROJECT', Project_Order, 'project_id')
         super().save(*args, **kwargs)
@@ -477,6 +606,13 @@ class Project_Order(models.Model):
     class Meta:
         verbose_name = '方案'
         verbose_name_plural = '方案'
+        indexes = [
+            models.Index(fields=['project_id'], name='idx_project_order_project_id'),
+            models.Index(fields=['status'], name='idx_project_order_status'),
+            models.Index(fields=['created_at'], name='idx_project_order_created_at'),
+            models.Index(fields=['client'], name='idx_project_order_client'),
+            models.Index(fields=['order'], name='idx_project_order_order'),
+        ]
 
 
 class Report(models.Model):
@@ -546,3 +682,37 @@ class Report(models.Model):
             ('can_sign_report', '可以签发报告'),
             ('can_reject_report', '可以拒绝报告'),
         )
+
+
+class ImportTemplate(models.Model):
+    """导入模板模型"""
+    # 模板名称
+    name = models.CharField(max_length=255, verbose_name='模板名称')
+    # 关联的样品类型描述
+    sample_type_description = models.ForeignKey(
+        SampleTypeDescription, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name='样品类型描述'
+    )
+    # 模板文件
+    template_file = models.FileField(upload_to=get_import_template_path, verbose_name='模板文件')
+    # 模板描述
+    description = models.TextField(blank=True, verbose_name='模板描述')
+    # 是否启用
+    is_active = models.BooleanField(default=True, verbose_name='是否启用')
+    # 创建人
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+    # 创建时间
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    # 更新时间
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    def __str__(self):
+        """返回模板名称作为字符串表示"""
+        return self.name
+
+    class Meta:
+        verbose_name = '导入模板'
+        verbose_name_plural = '导入模板'

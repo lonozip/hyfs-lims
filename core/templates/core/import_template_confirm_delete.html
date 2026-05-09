@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+
+{% block title %}确认删除模板{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3>确认删除</h3>
+                </div>
+                <div class="card-body">
+                    <p>确定要删除模板 <strong>{{ template.name }}</strong> 吗？</p>
+                    <p class="text-danger">此操作不可撤销，相关的模板文件也将被删除。</p>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> 确认删除
+                        </button>
+                        <a href="{% url 'import_template_list' %}" class="btn btn-secondary ml-2">
+                            <i class="fa fa-arrow-left"></i> 返回
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

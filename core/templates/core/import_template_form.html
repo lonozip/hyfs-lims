@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{% if template %}编辑模板{% else %}添加模板{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>{% if template %}编辑模板{% else %}添加导入模板{% endif %}</h2>
+            
+            <form method="post" enctype="multipart/form-data" class="mt-4">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="name">模板名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" 
+                           value="{{ template.name|default:'' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sample_type_description">关联样品类型描述</label>
+                    <select class="form-control" id="sample_type_description" name="sample_type_description">
+                        <option value="">请选择样品类型描述（可选）</option>
+                        {% for desc in sample_type_descriptions %}
+                        <option value="{{ desc.id }}" 
+                                {% if template and template.sample_type_description_id == desc.id %}selected{% endif %}>
+                            {{ desc.description }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="template_file">模板文件 <span class="text-danger">*</span>{% if template %}（不修改请留空）{% endif %}</label>
+                    <input type="file" class="form-control-file" id="template_file" name="template_file"
+                           {% if not template %}required{% endif %} accept=".xlsx,.xls">
+                    {% if template and template.template_file %}
+                    <small class="text-muted">当前文件: {{ template.template_file.name }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">模板描述</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">
+                        {{ template.description|default:'' }}
+                    </textarea>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active"
+                               {% if template and template.is_active or not template %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">启用模板</label>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> 保存
+                    </button>
+                    <a href="{% url 'import_template_list' %}" class="btn btn-secondary ml-2">
+                        <i class="fa fa-arrow-left"></i> 返回
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'core/base.html' %}
+
+{% block title %}导入模板管理{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">导入模板管理</h2>
+            
+            <!-- 添加按钮 -->
+            <div class="mb-4">
+                <a href="{% url 'import_template_create' %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> 添加模板
+                </a>
+            </div>
+            
+            <!-- 模板列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">模板列表</h3>
+                </div>
+                <div class="card-body">
+                    {% if templates %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>模板名称</th>
+                                <th>关联样品类型描述</th>
+                                <th>模板文件</th>
+                                <th>描述</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                            <tr>
+                                <td>{{ template.name }}</td>
+                                <td>
+                                    {% if template.sample_type_description %}
+                                        {{ template.sample_type_description.description }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if template.template_file %}
+                                        <a href="{% url 'import_template_download' template.id %}" class="text-primary" download>
+                                            <i class="fa fa-download"></i> 下载
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ template.description|default:"-" }}</td>
+                                <td>
+                                    {% if template.is_active %}
+                                        <span class="badge badge-success">启用</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">禁用</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ template.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'import_template_edit' template.id %}" class="btn btn-sm btn-info">
+                                        <i class="fa fa-edit"></i> 编辑
+                                    </a>
+                                    <a href="{% url 'import_template_delete' template.id %}" class="btn btn-sm btn-danger">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="alert alert-info">
+                        暂无导入模板，请点击上方按钮添加。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -16,6 +16,7 @@
                 <tr>
                     <th>样品类型</th>
                     <th>描述内容</th>
+                    <th>量纲</th>
                     <th>创建人</th>
                     <th>创建时间</th>
                     <th>操作</th>
@@ -26,6 +27,7 @@
                 <tr>
                     <td>{{ description.sample_type.name }}</td>
                     <td>{{ description.description|truncatechars:50 }}</td>
+                    <td>{{ description.unit }}</td>
                     <td>{{ description.created_by.username }}</td>
                     <td>{{ description.created_at }}</td>
                     <td>

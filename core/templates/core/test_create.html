@@ -30,6 +30,100 @@
                         <input type="text" class="form-control" id="sample_type_desc_display" readonly>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">量纲</label>
+                        <div class="d-flex gap-2">
+                            <select class="form-select flex-1" id="unit_prefix" name="unit_prefix">
+                                <option value="">无前缀</option>
+                                <optgroup label="中文前缀">
+                                    <option value="尧">尧 (Y) - 10²⁴</option>
+                                    <option value="泽">泽 (Z) - 10²¹</option>
+                                    <option value="艾">艾 (E) - 10¹⁸</option>
+                                    <option value="拍">拍 (P) - 10¹⁵</option>
+                                    <option value="太">太 (T) - 10¹²</option>
+                                    <option value="吉">吉 (G) - 10⁹</option>
+                                    <option value="兆">兆 (M) - 10⁶</option>
+                                    <option value="千">千 (k) - 10³</option>
+                                    <option value="百">百 (h) - 10²</option>
+                                    <option value="十">十 (da) - 10¹</option>
+                                    <option value="分">分 (d) - 10⁻¹</option>
+                                    <option value="厘">厘 (c) - 10⁻²</option>
+                                    <option value="毫">毫 (m) - 10⁻³</option>
+                                    <option value="微">微 (μ) - 10⁻⁶</option>
+                                    <option value="纳">纳 (n) - 10⁻⁹</option>
+                                    <option value="皮">皮 (p) - 10⁻¹²</option>
+                                    <option value="飞">飞 (f) - 10⁻¹⁵</option>
+                                    <option value="阿">阿 (a) - 10⁻¹⁸</option>
+                                    <option value="仄">仄 (z) - 10⁻²¹</option>
+                                    <option value="幺">幺 (y) - 10⁻²⁴</option>
+                                </optgroup>
+                                <optgroup label="符号前缀">
+                                    <option value="Y">Y (尧)</option>
+                                    <option value="Z">Z (泽)</option>
+                                    <option value="E">E (艾)</option>
+                                    <option value="P">P (拍)</option>
+                                    <option value="T">T (太)</option>
+                                    <option value="G">G (吉)</option>
+                                    <option value="M">M (兆)</option>
+                                    <option value="k">k (千)</option>
+                                    <option value="h">h (百)</option>
+                                    <option value="da">da (十)</option>
+                                    <option value="d">d (分)</option>
+                                    <option value="c">c (厘)</option>
+                                    <option value="m">m (毫)</option>
+                                    <option value="μ">μ (微)</option>
+                                    <option value="n">n (纳)</option>
+                                    <option value="p">p (皮)</option>
+                                    <option value="f">f (飞)</option>
+                                    <option value="a">a (阿)</option>
+                                    <option value="z">z (仄)</option>
+                                    <option value="y">y (幺)</option>
+                                </optgroup>
+                            </select>
+                            <select class="form-select flex-1" id="unit_base" name="unit_base">
+                                <option value="">选择基础单位</option>
+                                <optgroup label="辐射相关">
+                                    <option value="Bq">贝可勒尔 (Bq)</option>
+                                    <option value="Gy">戈瑞 (Gy)</option>
+                                    <option value="Sv">西弗 (Sv)</option>
+                                    <option value="Bq/m³">贝可勒尔/立方米 (Bq/m³)</option>
+                                    <option value="Sv/h">西弗/小时 (Sv/h)</option>
+                                    <option value="μSv/h">微西弗/小时 (μSv/h)</option>
+                                </optgroup>
+                                <optgroup label="国际单位制">
+                                    <option value="m">米 (m)</option>
+                                    <option value="kg">千克 (kg)</option>
+                                    <option value="s">秒 (s)</option>
+                                    <option value="A">安培 (A)</option>
+                                    <option value="K">开尔文 (K)</option>
+                                    <option value="mol">摩尔 (mol)</option>
+                                    <option value="cd">坎德拉 (cd)</option>
+                                </optgroup>
+                                <optgroup label="导出单位">
+                                    <option value="Hz">赫兹 (Hz)</option>
+                                    <option value="N">牛顿 (N)</option>
+                                    <option value="Pa">帕斯卡 (Pa)</option>
+                                    <option value="J">焦耳 (J)</option>
+                                    <option value="W">瓦特 (W)</option>
+                                    <option value="V">伏特 (V)</option>
+                                    <option value="Ω">欧姆 (Ω)</option>
+                                    <option value="F">法拉 (F)</option>
+                                    <option value="H">亨利 (H)</option>
+                                </optgroup>
+                                <optgroup label="组合单位">
+                                    <option value="m/s">米/秒 (m/s)</option>
+                                    <option value="m/s²">米/秒² (m/s²)</option>
+                                    <option value="m³">立方米 (m³)</option>
+                                    <option value="kg/m³">千克/立方米 (kg/m³)</option>
+                                </optgroup>
+                                <optgroup label="其他">
+                                    <option value="%">百分比 (%)</option>
+                                    <option value="°C">摄氏度 (°C)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <input type="hidden" id="unit" name="unit" value="">
+                    </div>
+                    <div class="mb-3">
                         <label for="status" class="form-label">状态</label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="pending">待测试</option>
@@ -89,5 +183,20 @@
             document.getElementById('sample_type_display').value = option.getAttribute('data-sample-type') || '-';
             document.getElementById('sample_type_desc_display').value = option.getAttribute('data-sample-desc') || '-';
         }
+
+        // 监听选择框变化，更新单位字段
+        document.getElementById('unit_prefix').addEventListener('change', updateUnit);
+        document.getElementById('unit_base').addEventListener('change', updateUnit);
+
+        function updateUnit() {
+            var prefix = document.getElementById('unit_prefix').value;
+            var baseUnit = document.getElementById('unit_base').value;
+            document.getElementById('unit').value = prefix + baseUnit;
+        }
+
+        // 表单提交前确保单位字段已更新
+        document.querySelector('form').addEventListener('submit', function(e) {
+            updateUnit();
+        });
     </script>
 {% endblock %}

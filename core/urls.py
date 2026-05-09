@@ -26,6 +26,8 @@ urlpatterns = [
     path('clients/<int:pk>/delete/', views.client_delete, name='client_delete'),
     # 样品列表URL
     path('samples/', views.sample_list, name='sample_list'),
+    # 按方案显示样品列表URL
+    path('samples/project/<str:project_id>/', views.sample_list, name='sample_list_by_project'),
     # 样品添加URL
     path('samples/create/', views.sample_create, name='sample_create'),
     # 样品编辑URL
@@ -34,6 +36,8 @@ urlpatterns = [
     path('samples/<int:pk>/delete/', views.sample_delete, name='sample_delete'),
     # 测试列表URL
     path('tests/', views.test_list, name='test_list'),
+    # 按方案显示测试列表URL
+    path('tests/project/<str:project_id>/', views.test_list, name='test_list_by_project'),
     # 测试添加URL
     path('tests/create/', views.test_create, name='test_create'),
     # 测试编辑URL
@@ -70,6 +74,7 @@ urlpatterns = [
     path('project_orders/create/', views.project_order_create, name='project_order_create'),
     # 项目方案详情URL
     path('project_orders/<int:pk>/', views.project_order_detail, name='project_order_detail'),
+    path('project_orders/by-id/<str:project_id>/', views.project_order_detail_by_id, name='project_order_detail_by_id'),
     # 项目方案编辑URL
     path('project_orders/<int:pk>/edit/', views.project_order_edit, name='project_order_edit'),
     # 项目方案删除URL
@@ -108,5 +113,18 @@ urlpatterns = [
     path('sample_types/<int:pk>/edit/', views.sample_type_edit, name='sample_type_edit'),
     # 样品类型删除URL
     path('sample_types/<int:pk>/delete/', views.sample_type_delete, name='sample_type_delete'),
+    # 测试Excel批量导入URL
+    path('tests/import_excel/', views.test_import_excel, name='test_import_excel'),
+    # 测试Excel导入模板下载URL
+    path('tests/import_template/', views.test_import_template, name='test_import_template'),
+    # 保存辐射测量信息 URL
+    path('tests/save_radiation_info/', views.save_radiation_info, name='save_radiation_info'),
+    
+    # 导入模板管理URL
+    path('import_templates/', views.import_template_list, name='import_template_list'),
+    path('import_templates/create/', views.import_template_create, name='import_template_create'),
+    path('import_templates/<int:template_id>/edit/', views.import_template_edit, name='import_template_edit'),
+    path('import_templates/<int:template_id>/delete/', views.import_template_delete, name='import_template_delete'),
+    path('import_templates/<int:template_id>/download/', views.import_template_download, name='import_template_download'),
     
 ]

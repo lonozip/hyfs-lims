@@ -10,73 +10,1086 @@
         </div>
     </div>
 
-    <!-- 搜索框 -->
-    <div class="mb-3">
-        <form method="get" action="{% url 'test_list' %}">
-            <div class="input-group">
-                <input type="text" class="form-control" placeholder="搜索样本ID、样品类型、样品类型描述、状态、结果、地址信息..." name="search" value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary">搜索</button>
+    <div class="row">
+        <!-- 方案导航侧边栏 -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">方案列表</h5>
+                </div>
+                <!-- 方案搜索框 -->
+                <div class="p-3">
+                    <input type="text" id="projectSearchInput" class="form-control form-control-sm" placeholder="搜索方案..." onkeyup="filterProjects()">
+                </div>
+                <div class="list-group list-group-flush" id="projectList">
+                    <a href="{% url 'test_list' %}" class="list-group-item list-group-item-action {% if not current_project_id %}active{% endif %} project-item" data-project-name="全部方案">
+                        <i class="bi bi-folder-open"></i> 全部方案
+                    </a>
+                    {% for project in all_projects %}
+                        <a href="{% url 'test_list_by_project' project.project_id %}" 
+                           class="list-group-item list-group-item-action {% if current_project_id == project.project_id %}active{% endif %} project-item"
+                           data-project-id="{{ project.project_id }}"
+                           data-project-name="{{ project.name }}"
+                           data-client-name="{{ project.client.name|default:'' }}">
+                            <i class="bi bi-folder"></i> {{ project.project_id }}
+                            <span class="text-muted text-sm d-block">{{ project.name }}</span>
+                        </a>
+                    {% empty %}
+                        <li class="list-group-item text-muted">暂无方案</li>
+                    {% endfor %}
+                </div>
             </div>
-        </form>
-    </div>
+            
+            <!-- 当前方案信息 -->
+            {% if current_project %}
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">方案详情</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">方案编号</dt>
+                        <dd class="col-sm-8">{{ current_project.project_id }}</dd>
+                        <dt class="col-sm-4">方案名称</dt>
+                        <dd class="col-sm-8">{{ current_project.name }}</dd>
+                        <dt class="col-sm-4">客户</dt>
+                        <dd class="col-sm-8">{{ current_project.client.name|default:"-" }}</dd>
+                        <dt class="col-sm-4">状态</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-{% if current_project.status == 'completed' %}success{% elif current_project.status == 'in_progress' %}primary{% else %}secondary{% endif %}">
+                                {{ current_project.get_status_display }}
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-sm">
-            <thead>
-                <tr>
-                    <th>测试ID</th>
-                    <th>样本ID</th>
-                    <th>样品类型</th>
-                    <th>样品类型描述</th>
-                    <th>照片</th>
-                    <th>状态</th>
-                    <th>结果</th>
-                    <th>地址信息</th>
-                    <th>分析人员</th>
-                    <th>验证人员</th>
-                    <th>分析日期</th>
-                    <th>验证日期</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for test in tests %}
-                <tr>
-                    <td>{{ test.id }}</td>
-                    <td>{{ test.sample.sample_id }}</td>
-                    <td>{{ test.sample.sample_type.name|default:"-" }}</td>
-                    <td>{{ test.sample.sample_type_description.description|default:"-" }}</td>
-                    <td>
-                        {% if test.photo %}
-                            <img src="{{ test.photo.url }}" alt="测试照片" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if test.status == 'pending' %}
-                            <span class="badge bg-warning">待处理</span>
-                        {% elif test.status == 'in_progress' %}
-                            <span class="badge bg-info">处理中</span>
-                        {% elif test.status == 'completed' %}
-                            <span class="badge bg-success">已完成</span>
-                        {% elif test.status == 'failed' %}
-                            <span class="badge bg-danger">已失败</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ test.result }}</td>
-                    <td>{{ test.address|truncatechars:20 }}</td>
-                    <td>{{ test.analyzed_by.username|default:"-" }}</td>
-                    <td>{{ test.verified_by.username|default:"-" }}</td>
-                    <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
-                    <td>{{ test.verification_date|date:"Y-m-d H:i"|default:"-" }}</td>
-                    <td>
-                        <a href="{% url 'test_edit' test.id %}" class="btn btn-sm btn-primary">编辑</a>
-                        <a href="/admin/core/test/{{ test.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- 主内容区域 -->
+        <div class="col-md-9">
+            <!-- 搜索框 -->
+            <div class="mb-3">
+                <form method="get" action="{% if current_project_id %}{% url 'test_list_by_project' current_project_id %}{% else %}{% url 'test_list' %}{% endif %}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="搜索样本ID、样品类型、样品类型描述、状态、结果、地址信息..." name="search" value="{{ search_query }}">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 当前方案标题 -->
+            {% if current_project %}
+            <div class="alert alert-info mb-4">
+                <h4 class="alert-heading">方案: {{ current_project.project_id }} - {{ current_project.name }}</h4>
+                <p class="mb-0">以下是该方案下的所有测试数据</p>
+            </div>
+            {% endif %}
+
+            <!-- 分组卡片布局 -->
+            <div class="space-y-6">
+                {% for project_group in grouped_tests %}
+                    <!-- 方案分组 -->
+                    <div class="border rounded-lg shadow-sm overflow-hidden">
+                        <!-- 方案标题 -->
+                        <div class="bg-primary text-white px-4 py-3">
+                            <h3 class="h4 mb-0">{{ project_group.project_name }}</h3>
+                        </div>
+                        
+                        <!-- 样品描述分组 -->
+                        <div class="p-4 space-y-4">
+                            {% for description, tests in project_group.descriptions.items %}
+                                {% with forloop.counter as desc_index %}
+                                <!-- 样品描述卡片 -->
+                                <div class="border rounded-lg bg-light">
+                                    <!-- 描述标题 -->
+                                    <div class="bg-secondary bg-opacity-10 px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
+                                        <h4 class="h5 mb-0 text-secondary">{{ description }}</h4>
+                                        <!-- Excel导入按钮 -->
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importModal{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                            <i class="bi bi-file-earmark-excel"></i> Excel批量导入
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- X、γ辐射剂量率特殊区域 - 基本信息、宇宙射线信息和仪器信息 -->
+                                    {% if "辐射" in description or "γ" in description or "γ" in description or "X 射线" in description or "x 射线" in description %}
+                                    <div class="bg-info bg-opacity-5 px-4 py-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="text-info mb-0">辐射测量信息</h5>
+                                            <button type="button" class="btn btn-sm btn-outline-primary radiation-edit-btn" data-suffix="{{ forloop.parentloop.counter }}_{{ forloop.counter }}" data-project-id="{{ project_group.project_id }}">
+                                                <i class="bi bi-pencil-square"></i> 编辑
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- 显示模式 -->
+                                        <div id="radiationDisplay{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="radiation-display" data-project-id="{{ project_group.project_id }}">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-sm font-weight-bold text-info mb-2">基本信息</h6>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">项目名称：</span></div>
+                                                <div class="col-8" data-field="radiation_project_name"></div>
+                                            </div>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">监测日期：</span></div>
+                                                <div class="col-8" data-field="radiation_monitoring_date"></div>
+                                            </div>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">监测地点：</span></div>
+                                                <div class="col-8" data-field="radiation_location"></div>
+                                            </div>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">天气状况：</span></div>
+                                                <div class="col-8" data-field="radiation_weather"></div>
+                                            </div>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">监测依据：</span></div>
+                                                <div class="col-8" data-field="radiation_basis"></div>
+                                            </div>
+                                            <div class="row text-sm mb-2">
+                                                <div class="col-4"><span class="text-muted">温度/湿度：</span></div>
+                                                <div class="col-8">
+                                                    <span data-field="radiation_temperature"></span>℃ / 
+                                                    <span data-field="radiation_humidity"></span>%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-sm font-weight-bold text-info mb-2">宇宙射线信息</h6>
+                                            <table class="table table-sm table-bordered table-striped cosmic-ray-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-xs">编号</th>
+                                                        <th class="text-xs">测量地点</th>
+                                                        <th class="text-xs">经度 (E)</th>
+                                                        <th class="text-xs">纬度 (N)</th>
+                                                        <th class="text-xs">高程 (H)</th>
+                                                        <th class="text-xs">响应值 Xc (Gy/h)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                    <tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                    <tr><td>3</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                </tbody>
+                                            </table>
+                                            
+                                            <h6 class="text-sm font-weight-bold text-info mb-2">仪器信息</h6>
+                                            <table class="table table-sm table-bordered table-striped instrument-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-xs">编号</th>
+                                                        <th class="text-xs">名称</th>
+                                                        <th class="text-xs">型号</th>
+                                                        <th class="text-xs">编号</th>
+                                                        <th class="text-xs">校准/检定因子 k1</th>
+                                                        <th class="text-xs">效率因子 k2</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                    <tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                    <tr><td>3</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 编辑模式 -->
+                                <div id="radiationEdit{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="radiation-edit" style="display: none;">
+                                    <form id="radiationForm{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                        <input type="hidden" name="project_id" value="{{ project_group.project_id }}">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-sm font-weight-bold text-info mb-2">基本信息</h6>
+                                                <div class="mb-2">
+                                                    <label class="form-label text-sm">项目名称</label>
+                                                    <input type="text" class="form-control form-control-sm" name="radiation_project_name" value="{{ project_group.project_name }}">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label text-sm">监测日期</label>
+                                                    <input type="text" class="form-control form-control-sm" name="radiation_monitoring_date" placeholder="YYYY-MM-DD">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label text-sm">监测地点</label>
+                                                    <input type="text" class="form-control form-control-sm" name="radiation_location">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label text-sm">天气状况</label>
+                                                    <input type="text" class="form-control form-control-sm" name="radiation_weather">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label text-sm">监测依据</label>
+                                                    <input type="text" class="form-control form-control-sm" name="radiation_basis">
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-6 mb-2">
+                                                        <label class="form-label text-sm">温度 (℃)</label>
+                                                        <input type="text" class="form-control form-control-sm" name="radiation_temperature">
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <label class="form-label text-sm">湿度 (%)</label>
+                                                        <input type="text" class="form-control form-control-sm" name="radiation_humidity">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-sm font-weight-bold text-info mb-2">宇宙射线信息</h6>
+                                                <table class="table table-sm table-bordered cosmic-ray-table-edit">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-xs">编号</th>
+                                                            <th class="text-xs">测量地点</th>
+                                                            <th class="text-xs">经度 (E)</th>
+                                                            <th class="text-xs">纬度 (N)</th>
+                                                            <th class="text-xs">高程 (H)</th>
+                                                            <th class="text-xs">响应值 Xc (Gy/h)</th>
+                                                            <th class="text-xs">操作</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>1</td>
+                                                            <td><input type="text" name="cosmic_location[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lon[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lat[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_elev[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="cosmic_xc[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>2</td>
+                                                            <td><input type="text" name="cosmic_location[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lon[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lat[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_elev[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="cosmic_xc[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>3</td>
+                                                            <td><input type="text" name="cosmic_location[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lon[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_lat[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="cosmic_elev[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="cosmic_xc[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                <button type="button" class="btn btn-xs btn-success mt-1 add-cosmic-row" data-suffix="{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                    <i class="bi bi-plus"></i> 新增一行
+                                                </button>
+                                                
+                                                <h6 class="text-sm font-weight-bold text-info mb-2">仪器信息</h6>
+                                                <table class="table table-sm table-bordered instrument-table-edit">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-xs">编号</th>
+                                                            <th class="text-xs">名称</th>
+                                                            <th class="text-xs">型号</th>
+                                                            <th class="text-xs">编号</th>
+                                                            <th class="text-xs">k1</th>
+                                                            <th class="text-xs">k2</th>
+                                                            <th class="text-xs">操作</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>1</td>
+                                                            <td><input type="text" name="instrument_name[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_model[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_code[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_k1[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="instrument_k2[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>2</td>
+                                                            <td><input type="text" name="instrument_name[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_model[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_code[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_k1[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="instrument_k2[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>3</td>
+                                                            <td><input type="text" name="instrument_name[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_model[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_code[]" class="form-control form-control-sm" size="8"></td>
+                                                            <td><input type="text" name="instrument_k1[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><input type="text" name="instrument_k2[]" class="form-control form-control-sm" size="6"></td>
+                                                            <td><button type="button" class="btn btn-xs btn-danger remove-row-btn"><i class="bi bi-trash"></i></button></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                <button type="button" class="btn btn-xs btn-success mt-1 add-instrument-row" data-suffix="{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                    <i class="bi bi-plus"></i> 新增一行
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-sm btn-primary radiation-save-btn" data-suffix="{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                <i class="bi bi-check-lg"></i> 保存
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-secondary radiation-cancel-btn" data-suffix="{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                <i class="bi bi-x-lg"></i> 取消
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- 测试列表 -->
+                            <div class="p-4">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>测试ID</th>
+                                                <th>样本ID</th>
+                                                <th>样品类型</th>
+                                                <th>量纲</th>
+                                                <th>照片</th>
+                                                <th>状态</th>
+                                                <th>结果</th>
+                                                <th>地址信息</th>
+                                                {% if "辐射" in description or "γ" in description or "γ" in description or "X 射线" in description or "x 射线" in description %}
+                                                <th>点位描述</th>
+                                                <th>经度(E)</th>
+                                                <th>纬度(N)</th>
+                                                <th>高程(H)</th>
+                                                <th>Rγ(1)</th>
+                                                <th>Rγ(2)</th>
+                                                <th>Rγ(3)</th>
+                                                <th>Rγ(4)</th>
+                                                <th>Rγ(5)</th>
+                                                <th>宇宙射线</th>
+                                                <th>k3</th>
+                                                <th>平均值</th>
+                                                <th>标准差</th>
+                                                <th>备注</th>
+                                                {% endif %}
+                                                <th>分析人员</th>
+                                                <th>分析日期</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for test in tests %}
+                                            <tr>
+                                                <td>{{ test.id }}</td>
+                                                <td>{{ test.sample.sample_id }}</td>
+                                                <td>{{ test.sample.sample_type.name|default:"-" }}</td>
+                                                <td>{{ test.unit|default:"-" }}</td>
+                                                <td>
+                                                    {% if test.photo %}
+                                                        <img src="{{ test.photo.url }}" alt="测试照片" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if test.status == 'pending' %}
+                                                        <span class="badge bg-warning">待处理</span>
+                                                    {% elif test.status == 'in_progress' %}
+                                                        <span class="badge bg-info">处理中</span>
+                                                    {% elif test.status == 'completed' %}
+                                                        <span class="badge bg-success">已完成</span>
+                                                    {% elif test.status == 'failed' %}
+                                                        <span class="badge bg-danger">已失败</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ test.result }}</td>
+                                                <td>{{ test.address|truncatechars:20 }}</td>
+                                                {% if "辐射" in description or "γ" in description or "γ" in description or "X 射线" in description or "x 射线" in description %}
+                                                <td>{{ test.point_description|default:"-" }}</td>
+                                                <td>{{ test.longitude|default:"-" }}</td>
+                                                <td>{{ test.latitude|default:"-" }}</td>
+                                                <td>{{ test.elevation|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_1|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_2|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_3|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_4|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_5|default:"-" }}</td>
+                                                <td>{{ test.cosmic_ray|default:"-" }}</td>
+                                                <td>{{ test.k3|default:"-" }}</td>
+                                                <td>{{ test.avg_value|default:"-" }}</td>
+                                                <td>{{ test.std_value|default:"-" }}</td>
+                                                <td>{{ test.remark|default:"-" }}</td>
+                                                {% endif %}
+                                                <td>{{ test.analyzed_by.username|default:"-" }}</td>
+                                                <td>{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
+                                                <td>
+                                                    <a href="{% url 'test_edit' test.id %}" class="btn btn-sm btn-primary">编辑</a>
+                                                    <a href="/admin/core/test/{{ test.id }}/delete/" class="btn btn-sm btn-danger">删除</a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Excel导入模态框 -->
+                        <div class="modal fade" id="importModal{{ forloop.parentloop.counter }}_{{ forloop.counter }}" tabindex="-1" aria-labelledby="importModalLabel{{ forloop.parentloop.counter }}_{{ forloop.counter }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="importModalLabel{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                            Excel批量导入 - {{ project_group.project_name }} - {{ description }}
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="post" action="{% url 'test_import_excel' %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <!-- 隐藏字段存储方案ID和描述信息 -->
+                                            <input type="hidden" name="project_name" value="{{ project_group.project_name }}">
+                                            <input type="hidden" name="description" value="{{ description }}">
+                                            
+                                            <div class="alert alert-info">
+                                                <h6>导入说明：</h6>
+                                                <ul class="mb-0">
+                                                    <li>请下载模板文件，按照模板格式填写数据</li>
+                                                    {% if "辐射" in description or "γ" in description or "γ" in description or "X射线" in description or "x射线" in description %}
+                                                    <li>Excel文件需包含以下列：样本ID、点位描述、经度（E）、纬度（N）、高程（H）、仪器示值Rγ(1-5)、宇宙射线、k3、平均值、标准差、备注</li>
+                                                    <li>平均值将作为测试结果导入，点位描述将作为地址信息导入</li>
+                                                    {% else %}
+                                                    <li>Excel文件需包含以下列：样本ID、结果、地址信息、分析人员、分析日期</li>
+                                                    <li>分析日期格式：YYYY-MM-DD HH:MM</li>
+                                                    {% endif %}
+                                                    <li>只会更新属于当前方案且样品描述匹配的测试数据</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <a href="{% url 'test_import_template' %}?project={{ project_group.project_name|urlencode }}&description={{ description|urlencode }}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-download"></i> 下载导入模板
+                                                </a>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="excelFile{{ forloop.parentloop.counter }}_{{ forloop.counter }}" class="form-label">选择Excel文件</label>
+                                                <input type="file" class="form-control" id="excelFile{{ forloop.parentloop.counter }}_{{ forloop.counter }}" name="excel_file" accept=".xlsx,.xls" required>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">导入模式</label>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="import_mode" id="updateMode{{ forloop.parentloop.counter }}_{{ forloop.counter }}" value="update" checked>
+                                                    <label class="form-check-label" for="updateMode{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                        仅更新已有测试数据
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="import_mode" id="createMode{{ forloop.parentloop.counter }}_{{ forloop.counter }}" value="create">
+                                                    <label class="form-check-label" for="createMode{{ forloop.parentloop.counter }}_{{ forloop.counter }}">
+                                                        创建新测试数据
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                            <button type="submit" class="btn btn-success">开始导入</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-8">
+                <p class="text-muted">暂无测试数据</p>
+            </div>
+        {% endfor %}
     </div>
+        </div> <!-- 关闭 col-md-9 -->
+    </div> <!-- 关闭 row -->
+</div> <!-- 关闭分组卡片布局的外层容器 -->
+
+<!-- JavaScript 用于处理辐射测量信息的显示和编辑 -->
+<script>
+// 方案搜索过滤函数
+function filterProjects() {
+    const input = document.getElementById('projectSearchInput');
+    const filter = input.value.toLowerCase();
+    const items = document.getElementsByClassName('project-item');
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const projectId = item.getAttribute('data-project-id') || '';
+        const projectName = item.getAttribute('data-project-name') || '';
+        const clientName = item.getAttribute('data-client-name') || '';
+        
+        const text = (projectId + ' ' + projectName + ' ' + clientName).toLowerCase();
+        
+        if (text.includes(filter)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    }
+}
+
+(function() {
+    'use strict';
+    
+    // 全局缓存对象
+    const Cache = {
+        data: new Map(),
+        dom: new Map(),
+        pendingRequests: new Map()
+    };
+    
+    // 防抖函数
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // 节流函数
+    function throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+    
+    // 初始化DOM缓存
+    function initDomCache() {
+        const displayDivs = document.querySelectorAll('.radiation-display');
+        displayDivs.forEach(displayDiv => {
+            const suffix = displayDiv.id.replace('radiationDisplay', '');
+            Cache.dom.set(suffix, {
+                display: displayDiv,
+                edit: document.getElementById('radiationEdit' + suffix),
+                form: document.getElementById('radiationForm' + suffix),
+                fields: new Map(),
+                cosmicRayBody: displayDiv.querySelector('.cosmic-ray-table tbody'),
+                instrumentBody: displayDiv.querySelector('.instrument-table tbody')
+            });
+            
+            // 缓存基本信息字段
+            const fieldElements = displayDiv.querySelectorAll('[data-field]');
+            fieldElements.forEach(elem => {
+                const fieldName = elem.dataset.field;
+                Cache.dom.get(suffix).fields.set(fieldName, elem);
+            });
+        });
+    }
+    
+    // 使用DocumentFragment创建表格行
+    function createTableRow(item, index, fields) {
+        const row = document.createElement('tr');
+        const fragment = document.createDocumentFragment();
+        
+        // 序号列
+        const numCell = document.createElement('td');
+        numCell.textContent = index + 1;
+        fragment.appendChild(numCell);
+        
+        // 其他列
+        fields.forEach(field => {
+            const cell = document.createElement('td');
+            cell.textContent = item[field] || '';
+            fragment.appendChild(cell);
+        });
+        
+        row.appendChild(fragment);
+        return row;
+    }
+    
+    // 更新显示区域（优化版本）
+    function updateDisplayWithData(suffix, data) {
+        const cacheItem = Cache.dom.get(suffix);
+        if (!cacheItem || !cacheItem.display) return;
+        
+        // 使用requestAnimationFrame优化渲染
+        requestAnimationFrame(() => {
+            // 更新基本信息
+            const fields = ['radiation_project_name', 'radiation_monitoring_date', 'radiation_location', 
+                          'radiation_weather', 'radiation_basis', 'radiation_temperature', 'radiation_humidity'];
+            
+            fields.forEach(field => {
+                const elem = cacheItem.fields.get(field);
+                if (elem) {
+                    elem.textContent = data[field] || '';
+                }
+            });
+            
+            // 更新宇宙射线信息
+            if (cacheItem.cosmicRayBody) {
+                const fragment = document.createDocumentFragment();
+                if (data.cosmic_ray_info && data.cosmic_ray_info.length > 0) {
+                    data.cosmic_ray_info.forEach((item, index) => {
+                        const row = createTableRow(item, index, ['location', 'longitude', 'latitude', 'elevation', 'xc_response']);
+                        fragment.appendChild(row);
+                    });
+                } else {
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 6;
+                    emptyCell.textContent = '暂无数据';
+                    emptyRow.appendChild(emptyCell);
+                    fragment.appendChild(emptyRow);
+                }
+                cacheItem.cosmicRayBody.innerHTML = '';
+                cacheItem.cosmicRayBody.appendChild(fragment);
+            }
+            
+            // 更新仪器信息
+            if (cacheItem.instrumentBody) {
+                const fragment = document.createDocumentFragment();
+                if (data.instrument_info && data.instrument_info.length > 0) {
+                    data.instrument_info.forEach((item, index) => {
+                        const row = createTableRow(item, index, ['name', 'model', 'code', 'k1', 'k2']);
+                        fragment.appendChild(row);
+                    });
+                } else {
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 6;
+                    emptyCell.textContent = '暂无数据';
+                    emptyRow.appendChild(emptyCell);
+                    fragment.appendChild(emptyRow);
+                }
+                cacheItem.instrumentBody.innerHTML = '';
+                cacheItem.instrumentBody.appendChild(fragment);
+            }
+        });
+    }
+    
+    // 加载辐射测量数据（带缓存）
+    function loadRadiationData(suffix, projectId) {
+        // 检查缓存
+        if (Cache.data.has(projectId)) {
+            updateDisplayWithData(suffix, Cache.data.get(projectId));
+            return Promise.resolve();
+        }
+        
+        // 检查是否有正在进行的请求
+        if (Cache.pendingRequests.has(projectId)) {
+            return Cache.pendingRequests.get(projectId);
+        }
+        
+        // 创建新的请求
+        const promise = fetch('/project_orders/by-id/' + projectId + '/', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // 缓存数据
+            Cache.data.set(projectId, data);
+            updateDisplayWithData(suffix, data);
+            Cache.pendingRequests.delete(projectId);
+        })
+        .catch(error => {
+            console.error('加载辐射数据失败:', error);
+            Cache.pendingRequests.delete(projectId);
+            throw error;
+        });
+        
+        Cache.pendingRequests.set(projectId, promise);
+        return promise;
+    }
+    
+    // 切换编辑模式
+    function toggleEditMode(suffix) {
+        // 直接获取元素，不依赖缓存
+        const display = document.getElementById('radiationDisplay' + suffix);
+        const edit = document.getElementById('radiationEdit' + suffix);
+        
+        if (!display || !edit) return;
+        
+        const isEdit = display.style.display === 'none';
+        
+        // 使用classList切换显示
+        if (isEdit) {
+            display.style.display = 'block';
+            edit.style.display = 'none';
+        } else {
+            display.style.display = 'none';
+            edit.style.display = 'block';
+        }
+    }
+    
+    // 收集表格数据（优化版本）
+    function collectTableData(form, primaryField, otherFields, fieldNames) {
+        const result = [];
+        // 使用 querySelectorAll 获取表单内的元素
+        const primaryElements = form.querySelectorAll(`[name="${primaryField}"]`);
+        const rows = primaryElements.length;
+        
+        // 预分配数组大小
+        result.length = rows;
+        let resultIndex = 0;
+        
+        for (let i = 0; i < rows; i++) {
+            const values = [primaryElements[i] ? (primaryElements[i].value || '') : ''];
+            
+            for (let j = 0; j < otherFields.length; j++) {
+                const elements = form.querySelectorAll(`[name="${otherFields[j]}"]`);
+                values.push(elements[i] ? (elements[i].value || '') : '');
+            }
+            
+            // 检查是否有非空值
+            const hasValue = values.some(v => v !== '');
+            if (hasValue) {
+                const item = { number: i + 1 };
+                for (let j = 0; j < fieldNames.length; j++) {
+                    item[fieldNames[j]] = values[j];
+                }
+                result[resultIndex++] = item;
+            }
+        }
+        
+        // 截断数组到实际大小
+        result.length = resultIndex;
+        return result;
+    }
+    
+    // 保存辐射测量数据（优化版本）
+    function saveRadiationData(suffix) {
+        // 直接获取表单，不依赖缓存
+        const form = document.getElementById('radiationForm' + suffix);
+        if (!form) {
+            alert('找不到表单');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        const projectId = formData.get('project_id');
+        
+        // 收集宇宙射线信息
+        const cosmicRayInfo = collectTableData(
+            form, 
+            'cosmic_location[]', 
+            ['cosmic_lon[]', 'cosmic_lat[]', 'cosmic_elev[]', 'cosmic_xc[]'], 
+            ['location', 'longitude', 'latitude', 'elevation', 'xc_response']
+        );
+        formData.append('cosmic_ray_info', JSON.stringify(cosmicRayInfo));
+        
+        // 收集仪器信息
+        const instrumentInfo = collectTableData(
+            form, 
+            'instrument_name[]', 
+            ['instrument_model[]', 'instrument_code[]', 'instrument_k1[]', 'instrument_k2[]'], 
+            ['name', 'model', 'code', 'k1', 'k2']
+        );
+        formData.append('instrument_info', JSON.stringify(instrumentInfo));
+        
+        // 发送保存请求
+        fetch('{% url "save_radiation_info" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('服务器响应失败');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('保存成功！');
+                // 更新缓存
+                Cache.data.set(projectId, data);
+                // 切换到显示模式
+                toggleEditMode(suffix);
+                // 使用保存返回的数据更新显示
+                updateDisplayWithData(suffix, data);
+            } else {
+                alert('保存失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('保存失败：' + error.message);
+        });
+    }
+    
+    // 获取 CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化DOM缓存
+        initDomCache();
+        
+        // 延迟加载数据，使用requestIdleCallback
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => {
+                const domCache = Cache.dom;
+                domCache.forEach((cacheItem, suffix) => {
+                    const projectId = cacheItem.display.dataset.projectId;
+                    if (projectId) {
+                        loadRadiationData(suffix, projectId);
+                    }
+                });
+            });
+        } else {
+            setTimeout(() => {
+                const domCache = Cache.dom;
+                domCache.forEach((cacheItem, suffix) => {
+                    const projectId = cacheItem.display.dataset.projectId;
+                    if (projectId) {
+                        loadRadiationData(suffix, projectId);
+                    }
+                });
+            }, 100);
+        }
+        
+        // 使用事件委托处理所有按钮点击
+        document.addEventListener('click', function(e) {
+            // 编辑按钮
+            const editBtn = e.target.closest('.radiation-edit-btn');
+            if (editBtn) {
+                e.preventDefault();
+                const suffix = editBtn.dataset.suffix;
+                console.log('编辑按钮点击:', suffix);
+                toggleEditMode(suffix);
+                return;
+            }
+            
+            // 保存按钮
+            const saveBtn = e.target.closest('.radiation-save-btn');
+            if (saveBtn) {
+                e.preventDefault();
+                const suffix = saveBtn.dataset.suffix;
+                console.log('保存按钮点击:', suffix);
+                saveRadiationData(suffix);
+                return;
+            }
+            
+            // 取消按钮
+            const cancelBtn = e.target.closest('.radiation-cancel-btn');
+            if (cancelBtn) {
+                e.preventDefault();
+                const suffix = cancelBtn.dataset.suffix;
+                console.log('取消按钮点击:', suffix);
+                toggleEditMode(suffix);
+                return;
+            }
+            
+            // 宇宙射线表格 - 新增一行
+            const addCosmicBtn = e.target.closest('.add-cosmic-row');
+            if (addCosmicBtn) {
+                e.preventDefault();
+                addTableRow(addCosmicBtn, 'cosmic');
+                return;
+            }
+            
+            // 仪器表格 - 新增一行
+            const addInstrumentBtn = e.target.closest('.add-instrument-row');
+            if (addInstrumentBtn) {
+                e.preventDefault();
+                addTableRow(addInstrumentBtn, 'instrument');
+                return;
+            }
+            
+            // 删除行按钮
+            const removeRowBtn = e.target.closest('.remove-row-btn');
+            if (removeRowBtn) {
+                e.preventDefault();
+                removeTableRow(removeRowBtn);
+                return;
+            }
+        });
+    });
+    
+    // 添加表格行（优化版本）
+    let isAddingRow = false; // 防止重复触发
+    
+    function addTableRow(btn, tableType) {
+        // 防止重复触发
+        if (isAddingRow) return;
+        isAddingRow = true;
+        
+        const table = btn.previousElementSibling;
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        const newNumber = rows.length + 1;
+        
+        // 使用 requestAnimationFrame 优化渲染
+        requestAnimationFrame(() => {
+            let newRow;
+            if (tableType === 'cosmic') {
+                newRow = createCosmicRow(newNumber);
+            } else {
+                newRow = createInstrumentRow(newNumber);
+            }
+            
+            // 使用 DocumentFragment 减少重排
+            const fragment = document.createDocumentFragment();
+            fragment.appendChild(newRow);
+            tbody.appendChild(fragment);
+            
+            isAddingRow = false;
+        });
+    }
+    
+    // 创建宇宙射线信息行（优化版本）
+    function createCosmicRow(number) {
+        const row = document.createElement('tr');
+        row.className = 'table-row-animation';
+        
+        // 使用 createElement 替代 innerHTML，更高效
+        const cells = [];
+        
+        // 编号列
+        const numCell = document.createElement('td');
+        numCell.textContent = number;
+        cells.push(numCell);
+        
+        // 测量地点
+        cells.push(createInputCell('cosmic_location[]', 8));
+        
+        // 经度
+        cells.push(createInputCell('cosmic_lon[]', 8));
+        
+        // 纬度
+        cells.push(createInputCell('cosmic_lat[]', 8));
+        
+        // 高程
+        cells.push(createInputCell('cosmic_elev[]', 6));
+        
+        // 响应值
+        cells.push(createInputCell('cosmic_xc[]', 8));
+        
+        // 操作列
+        const actionCell = document.createElement('td');
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-xs btn-danger remove-row-btn';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        actionCell.appendChild(removeBtn);
+        cells.push(actionCell);
+        
+        // 添加所有单元格到行
+        cells.forEach(cell => row.appendChild(cell));
+        
+        return row;
+    }
+    
+    // 创建仪器信息行（优化版本）
+    function createInstrumentRow(number) {
+        const row = document.createElement('tr');
+        row.className = 'table-row-animation';
+        
+        const cells = [];
+        
+        // 编号列
+        const numCell = document.createElement('td');
+        numCell.textContent = number;
+        cells.push(numCell);
+        
+        // 名称
+        cells.push(createInputCell('instrument_name[]', 8));
+        
+        // 型号
+        cells.push(createInputCell('instrument_model[]', 8));
+        
+        // 编号
+        cells.push(createInputCell('instrument_code[]', 8));
+        
+        // k1
+        cells.push(createInputCell('instrument_k1[]', 6));
+        
+        // k2
+        cells.push(createInputCell('instrument_k2[]', 6));
+        
+        // 操作列
+        const actionCell = document.createElement('td');
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-xs btn-danger remove-row-btn';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        actionCell.appendChild(removeBtn);
+        cells.push(actionCell);
+        
+        // 添加所有单元格到行
+        cells.forEach(cell => row.appendChild(cell));
+        
+        return row;
+    }
+    
+    // 创建输入框单元格（复用函数）
+    function createInputCell(name, size) {
+        const cell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = name;
+        input.className = 'form-control form-control-sm';
+        input.size = size;
+        cell.appendChild(input);
+        return cell;
+    }
+    
+    // 删除表格行（优化版本）
+    function removeTableRow(btn) {
+        const row = btn.closest('tr');
+        const tbody = row.parentElement;
+        const rows = tbody.querySelectorAll('tr');
+        
+        // 至少保留一行
+        if (rows.length <= 1) {
+            alert('至少需要保留一行数据');
+            return;
+        }
+        
+        // 使用 requestAnimationFrame 优化渲染
+        requestAnimationFrame(() => {
+            row.remove();
+            
+            // 更新编号
+            const remainingRows = tbody.querySelectorAll('tr');
+            remainingRows.forEach((r, index) => {
+                r.querySelector('td:first-child').textContent = index + 1;
+            });
+        });
+    }
+})();
+</script>
 {% endblock %}

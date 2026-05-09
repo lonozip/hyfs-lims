@@ -25,6 +25,10 @@
                         <label for="description" class="form-label">描述内容</label>
                         <textarea class="form-control" id="description" name="description" rows="5" required>{{ sample_type_description.description }}</textarea>
                     </div>
+                    <div class="mb-3">
+                        <label for="unit" class="form-label">量纲</label>
+                        <input type="text" class="form-control" id="unit" name="unit" placeholder="例如：Bq/m³, μSv/h" value="{{ sample_type_description.unit }}">
+                    </div>
                     <button type="submit" class="btn btn-primary">保存</button>
                     <a href="{% url 'sample_type_description_list' %}" class="btn btn-secondary">取消</a>
                 </form>
