@@ -62,28 +62,6 @@
             </div>
 
             <!-- 样品类型卡片 -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">样品类型</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if sample_types %}
-                            <ul class="list-group">
-                                {% for sample_type in sample_types %}
-                                    <li class="list-group-item">
-                                        <strong>{{ sample_type.name }}</strong>
-                                        {% if sample_type.description %}<br><small>{{ sample_type.description }}</small>{% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>该方案未关联任何样品类型</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
             <!-- 样品类型描述卡片 -->
             <div class="col-md-6 mb-4">
                 <div class="card">
@@ -112,26 +90,7 @@
 
             <!-- 测试类型卡片 -->
             <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">测试类型</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if test_types %}
-                            <ul class="list-group">
-                                {% for test_type in test_types %}
-                                    <li class="list-group-item">
-                                        <strong>{{ test_type.test_name }}</strong>
-                                        {% if test_type.unit %}<span class="text-muted"> (单位: {{ test_type.unit }})</span>{% endif %}
-                                        {% if test_type.reference_range %}<br><small>参考范围: {{ test_type.reference_range }}</small>{% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>该方案未关联任何测试类型</p>
-                        {% endif %}
-                    </div>
-                </div>
+
             </div>
 
             <!-- 标准卡片 -->

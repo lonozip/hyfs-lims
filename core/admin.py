@@ -65,11 +65,11 @@ class SampleAdmin(admin.ModelAdmin):
 class TestAdmin(admin.ModelAdmin):
     """测试记录模型的Admin配置"""
     # 列表页面显示的字段
-    list_display = ('sample', 'test_type', 'status', 'result', 'analyzed_by', 'verified_by')
+    list_display = ('sample', 'status', 'result', 'analyzed_by', 'verified_by')
     # 列表过滤器
-    list_filter = ('status', 'test_type', 'analyzed_by', 'verified_by')
+    list_filter = ('status', 'analyzed_by', 'verified_by')
     # 搜索字段
-    search_fields = ('sample__sample_id', 'test_type__test_name')
+    search_fields = ('sample__sample_id', 'result')
 
 
 class InstrumentAdmin(admin.ModelAdmin):
@@ -92,7 +92,7 @@ class ReportAdmin(admin.ModelAdmin):
     # 只读字段
     readonly_fields = ('report_id',)
     # 多对多字段显示为并排选择列表
-    filter_horizontal = ('staff', 'samples', 'test_results', 'test_types', 'standards')
+    filter_horizontal = ('staff', 'samples', 'test_results', 'standards')
 
 
 class PositionAdmin(admin.ModelAdmin):
@@ -112,7 +112,7 @@ class Project_OrderAdmin(admin.ModelAdmin):
     search_fields = ('project_id', 'name', 'client__name', 'order__order_id')
     list_filter = ('status', 'client')
     readonly_fields = ('project_id',)
-    filter_horizontal = ('staff', 'sample_types', 'test_types', 'standards')
+    filter_horizontal = ('staff', 'sample_types', 'standards')
 
 class DepartmentAdmin(admin.ModelAdmin):
     """部门模型的Admin配置"""

@@ -196,31 +196,6 @@
         </tbody>
     </table>
     
-    <!-- 测试类型表格 -->
-    <h2>测试类型</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>测试名称</th>
-                <th>单位</th>
-                <th>参考范围</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for test_type in test_types %}
-                <tr>
-                    <td>{{ test_type.test_name }}</td>
-                    <td>{{ test_type.unit|default:"-" }}</td>
-                    <td>{{ test_type.reference_range|default:"-" }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3" style="text-align: center;">该方案未关联任何测试类型</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
     <!-- 关联标准表格 -->
     <h2>关联标准</h2>
     <table class="standard-table">

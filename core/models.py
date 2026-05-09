@@ -258,8 +258,6 @@ class Test(models.Model):
 
     # 关联的样品
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE, verbose_name='样品')
-    # 测试类型（现在关联到Standard模型）
-    test_type = models.ForeignKey('standard.Standard', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='测试类型')
     # 测试状态
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
     # 测试结果
@@ -284,8 +282,8 @@ class Test(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     def __str__(self):
-        """返回样品编号和测试类型作为字符串表示"""
-        return f"{self.sample.sample_id} - {self.test_type.test_name}"
+        """返回样品编号作为字符串表示"""
+        return f"{self.sample.sample_id}"
 
     class Meta:
         verbose_name = '测试记录'
@@ -463,8 +461,6 @@ class Project_Order(models.Model):
     sample_type_descriptions = models.ManyToManyField(SampleTypeDescription, verbose_name='样品类型描述')
     # 样品描述数量（JSON格式存储）
     sample_type_description_quantities = models.JSONField(default=dict, blank=True, verbose_name='样品描述数量')
-    # 关联的测试类型（现在关联到Standard模型）
-    test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='project_order_test_types')
     # 关联的标准
     standards = models.ManyToManyField('standard.Standard_radiation_hygiene', verbose_name='标准', related_name='project_order_standards')
     
@@ -516,8 +512,6 @@ class Report(models.Model):
     staff = models.ManyToManyField(Staff, verbose_name='员工', related_name='assigned_reports')
     # 关联的样品
     samples = models.ManyToManyField(Sample, verbose_name='样品')
-    # 关联的测试类型（现在关联到Standard模型）
-    test_types = models.ManyToManyField('standard.Standard', verbose_name='测试类型', related_name='report_test_types')
     # 关联的标准
     standards = models.ManyToManyField('standard.Standard_radiation_hygiene', verbose_name='标准', related_name='report_standards')
     # 关联的测试结果

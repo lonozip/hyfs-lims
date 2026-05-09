@@ -334,6 +334,9 @@ def sample_create(request):
         )
         sample.save()
         
+        # 为新创建的样品自动创建测试
+        create_tests_for_sample(sample)
+        
         # 显示成功消息
         messages.success(request, '样品添加成功！')
         # 重定向到样品列表页面
@@ -386,6 +389,9 @@ def sample_edit(request, pk):
         sample.collection_date = collection_date
         sample.save()
         
+        # 为更新后的样品自动创建测试（如果还没有的话）
+        create_tests_for_sample(sample)
+        
         # 显示成功消息
         messages.success(request, '样品更新成功！')
         # 重定向到样品列表页面
@@ -404,33 +410,19 @@ def sample_edit(request, pk):
 @require_permission('can_manage_tests')
 def test_list(request):
     """测试列表视图函数"""
-    # 获取所有样品
-    samples = Sample.objects.all()
-    
-    # 为每个没有测试的样品自动创建测试
-    for sample in samples:
-        # 检查该样品是否已有测试
-        existing_tests = Test.objects.filter(sample=sample)
-        if not existing_tests.exists():
-            # 获取样品关联的方案
-            if sample.project_order:
-                # 获取方案关联的测试类型
-                test_types = sample.project_order.test_types.all()
-                # 为每个测试类型创建测试
-                for test_type in test_types:
-                    Test.objects.create(
-                        sample=sample,
-                        test_type=test_type,
-                        status='pending',
-                        address='',
-                        field_data=''
-                    )
-    
     # 获取搜索关键词
     search_query = request.GET.get('search', '')
     
-    # 获取所有测试
-    tests = Test.objects.all()
+    # 获取所有测试，使用select_related优化查询
+    tests = Test.objects.select_related(
+        'sample', 
+        'sample__sample_type', 
+        'sample__project_order',
+        'analyzed_by',
+        'verified_by'
+    ).prefetch_related(
+        'sample__sample_type_description'
+    )
     
     # 如果有搜索关键词，进行模糊搜索
     if search_query:
@@ -577,10 +569,6 @@ def test_edit(request, pk):
                 # 更新报告的测试结果关联
                 report.test_results.clear()
                 report.test_results.add(*Test.objects.filter(sample__project_order=sample.project_order))
-                
-                # 更新报告的测试类型关联
-                report.test_types.clear()
-                report.test_types.add(*sample.project_order.test_types.all())
                 
                 report.save()
             except Report.DoesNotExist:
@@ -990,8 +978,6 @@ def project_order_create(request):
     sample_types = SampleType.objects.all()
     # 获取所有样品类型描述
     sample_type_descriptions = SampleTypeDescription.objects.all()
-    # 获取所有测试类型（Standard模型）
-    test_types = Standard.objects.all()
     # 获取所有标准（Standard_radiation_hygiene模型）
     standards = Standard_radiation_hygiene.objects.all()
     
@@ -1061,11 +1047,6 @@ def project_order_create(request):
             except SampleTypeDescription.DoesNotExist:
                 pass
         
-        # 添加测试类型
-        test_type_ids = request.POST.getlist('test_types')
-        for test_type_id in test_type_ids:
-            project_order.test_types.add(test_type_id)
-        
         # 添加标准
         standard_ids = request.POST.getlist('standards')
         for standard_id in standard_ids:
@@ -1093,7 +1074,6 @@ def project_order_create(request):
         'staffs': staffs,
         'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions,
-        'test_types': test_types,
         'standards': standards
     })
 
@@ -1113,8 +1093,6 @@ def project_order_edit(request, pk):
     sample_types = SampleType.objects.all()
     # 获取所有样品类型描述
     sample_type_descriptions = SampleTypeDescription.objects.all()
-    # 获取所有测试类型（Standard模型）
-    test_types = Standard.objects.all()
     # 获取所有标准（Standard_radiation_hygiene模型）
     standards = Standard_radiation_hygiene.objects.all()
     
@@ -1187,12 +1165,6 @@ def project_order_edit(request, pk):
             except SampleTypeDescription.DoesNotExist:
                 pass
         
-        # 更新测试类型
-        test_type_ids = request.POST.getlist('test_types')
-        project_order.test_types.clear()
-        for test_type_id in test_type_ids:
-            project_order.test_types.add(test_type_id)
-        
         # 更新标准
         standard_ids = request.POST.getlist('standards')
         project_order.standards.clear()
@@ -1235,7 +1207,6 @@ def project_order_edit(request, pk):
         'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions,
         'sample_type_description_quantities': sample_type_description_quantities,
-        'test_types': test_types,
         'standards': standards
     })
 
@@ -1246,12 +1217,8 @@ def project_order_detail(request, pk):
     """项目方案详情视图函数"""
     # 获取指定ID的项目方案订单，不存在则返回404
     project_order = get_object_or_404(Project_Order, pk=pk)
-    # 获取该方案关联的所有样品类型
-    sample_types = project_order.sample_types.all()
     # 获取该方案关联的所有样品类型描述
     sample_type_descriptions = project_order.sample_type_descriptions.all()
-    # 获取该方案关联的所有测试类型
-    test_types = project_order.test_types.all()
     # 获取该方案关联的所有标准
     standards = project_order.standards.all()
     
@@ -1261,10 +1228,8 @@ def project_order_detail(request, pk):
     # 渲染项目方案详情模板
     return render(request, 'core/project_order_detail.html', {
         'project_order': project_order,
-        'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions,
         'sample_type_description_quantities': sample_type_description_quantities,
-        'test_types': test_types,
         'standards': standards
     })
 
@@ -1337,10 +1302,6 @@ def report_create(request):
         sample_ids = request.POST.getlist('samples')
         if sample_ids:
             report.samples.set(sample_ids)
-        
-        test_type_ids = request.POST.getlist('test_types')
-        if test_type_ids:
-            report.test_types.set(test_type_ids)
         
         standard_ids = request.POST.getlist('standards')
         if standard_ids:
@@ -1423,9 +1384,6 @@ def report_edit(request, pk):
         sample_ids = request.POST.getlist('samples')
         report.samples.set(sample_ids)
         
-        test_type_ids = request.POST.getlist('test_types')
-        report.test_types.set(test_type_ids)
-        
         standard_ids = request.POST.getlist('standards')
         report.standards.set(standard_ids)
         
@@ -1466,12 +1424,8 @@ def report_detail(request, pk):
     test_results = []
     if project_order:
         test_results = Test.objects.filter(sample__project_order=project_order)
-    # 获取该方案关联的所有测试类型
-    test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
     standards = project_order.standards.all() if project_order else []
-    # 获取该方案关联的所有样品类型
-    sample_types = project_order.sample_types.all() if project_order else []
     # 获取该方案关联的所有样品类型描述
     sample_type_descriptions = project_order.sample_type_descriptions.all() if project_order else []
     # 渲染报告详情模板
@@ -1479,10 +1433,8 @@ def report_detail(request, pk):
         'report': report,
         'project_order': project_order,
         'samples': samples,
-        'test_types': test_types,
         'standards': standards,
         'test_results': test_results,
-        'sample_types': sample_types,
         'sample_type_descriptions': sample_type_descriptions
     })
 
@@ -1501,8 +1453,6 @@ def generate_pdf_report(request, pk):
     test_results = []
     if project_order:
         test_results = Test.objects.filter(sample__project_order=project_order)
-    # 获取该方案关联的所有测试类型
-    test_types = project_order.test_types.all() if project_order else []
     # 获取该方案关联的所有标准
     standards = project_order.standards.all() if project_order else []
     
@@ -1511,7 +1461,6 @@ def generate_pdf_report(request, pk):
         'report': report,
         'project_order': project_order,
         'samples': samples,
-        'test_types': test_types,
         'standards': standards,
         'test_results': test_results
     })
