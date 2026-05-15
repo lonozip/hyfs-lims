@@ -31,6 +31,9 @@ import tempfile
 import os
 from django.contrib.auth import authenticate, login
 
+# 导入计算模块
+from Calculation.cosmicRayResponseCalculation import calculate_r_gamma_avg_std, calculate_env_gamma, cosmicRayResponseCalculation
+
 
 def create_tests_for_sample(sample):
     """
@@ -2105,8 +2108,32 @@ def test_import_excel(request):
             
             # 判断是否为辐射剂量率类型的描述
             is_radiation = False
+            
+            # 方式1：从表单描述判断
             if description and ('辐射' in description or 'γ' in description or 'X射线' in description or 'x射线' in description.lower()):
                 is_radiation = True
+            
+            # 方式2：从Excel文件检测（即使描述为空也能识别）
+            if not is_radiation:
+                try:
+                    excel_data.seek(0)
+                    xls = pd.ExcelFile(excel_data)
+                    sheet_names = xls.sheet_names
+                    
+                    # 检查是否有"基本信息"工作表
+                    if '基本信息' in sheet_names:
+                        is_radiation = True
+                    else:
+                        # 检查第一个工作表是否包含辐射相关列
+                        first_sheet = pd.read_excel(xls, sheet_name=sheet_names[0], header=0, nrows=0)
+                        cols = [str(c).strip() for c in first_sheet.columns]
+                        radiation_cols = ['点位描述', '仪器示值', 'Rγ', '宇宙射线', 'k3', '经度', '纬度', '高程']
+                        for col in cols:
+                            if any(keyword in col for keyword in radiation_cols):
+                                is_radiation = True
+                                break
+                except Exception:
+                    pass
             
             # 根据是否为辐射类型选择必需的列
             if is_radiation:
@@ -2504,6 +2531,91 @@ def test_import_excel(request):
                         except ValueError:
                             test.std_value = None
                         test.remark = remark
+                    
+                        # 自动计算平均值、标准差和环境γ辐射剂量率
+                        if is_radiation:
+                            # 获取5次仪器示值
+                            r_vals = [test.r_gamma_1, test.r_gamma_2, test.r_gamma_3, test.r_gamma_4, test.r_gamma_5]
+                            
+                            # 检查是否有有效的仪器示值
+                            valid_r = [v for v in r_vals if v is not None]
+                            if len(valid_r) >= 2:
+                                # 使用计算模块计算平均值和标准差
+                                calc_avg, calc_std = calculate_r_gamma_avg_std(
+                                    test.r_gamma_1 or 0,
+                                    test.r_gamma_2 or 0,
+                                    test.r_gamma_3 or 0,
+                                    test.r_gamma_4 or 0,
+                                    test.r_gamma_5 or 0
+                                )
+                                
+                                # 总是使用计算值覆盖（即使Excel中有值）
+                                test.avg_value = calc_avg
+                                test.std_value = calc_std
+                                
+                                # 计算环境γ辐射剂量率
+                                # 获取仪器参数（优先从project_order，其次从basic_info）
+                                k1 = 1.0
+                                k2 = 1.0
+                                
+                                # 方式1：从project_order.instrument_info获取
+                                if project_order and hasattr(project_order, 'instrument_info') and project_order.instrument_info:
+                                    instrument_info_data = project_order.instrument_info
+                                    if isinstance(instrument_info_data, list) and len(instrument_info_data) > 0:
+                                        k1 = float(instrument_info_data[0].get('k1', 1.0))
+                                        k2 = float(instrument_info_data[0].get('k2', 1.0))
+                                
+                                # 计算宇宙射线响应值
+                                # 如果有经纬度和高程，使用计算模块计算
+                                calculated_xc = None
+                                if test.longitude and test.latitude and test.elevation:
+                                    try:
+                                        # 使用基准点参数计算宇宙射线响应值
+                                        # 参数：经度, 纬度, 高程, r_gamma_1~5, cosmic_ray_HONG_0, cosmic_ray, cosmic_ray_Hong, k3, xc_response, xc_response_1, SinlanmudaM, lanmudaM
+                                        calculated_xc = cosmicRayResponseCalculation(
+                                            test.longitude,
+                                            test.latitude,
+                                            test.elevation,
+                                            test.r_gamma_1 or 0,
+                                            test.r_gamma_2 or 0,
+                                            test.r_gamma_3 or 0,
+                                            test.r_gamma_4 or 0,
+                                            test.r_gamma_5 or 0,
+                                            30,      # cosmic_ray_HONG_0
+                                            0,       # cosmic_ray
+                                            42.31795062,  # cosmic_ray_Hong
+                                            k3_val,  # k3
+                                            13,      # xc_response (基准点响应值)
+                                            0,       # xc_response_1
+                                            0,       # SinlanmudaM
+                                            0        # lanmudaM
+                                        )
+                                    except Exception as calc_e:
+                                        print(f"计算宇宙射线响应值失败: {calc_e}")
+                                
+                                # 优先使用计算值，其次使用Excel中的值
+                                xc_response = calculated_xc if calculated_xc else (test.cosmic_ray or 0)
+                                
+                                # 更新test的cosmic_ray字段为计算值
+                                if calculated_xc:
+                                    test.cosmic_ray = calculated_xc
+                                
+                                # 获取屏蔽修正因子
+                                k3_val = test.k3 or 1.0
+                                
+                                # 计算环境γ辐射剂量率
+                                env_gamma_val = calculate_env_gamma(
+                                    None,          # env_gamma参数（输出）
+                                    xc_response,   # xc_response_1
+                                    k3_val,        # k3
+                                    k1,            # k1
+                                    k2,            # k2
+                                    test.avg_value # avg
+                                )
+                                
+                                # 将计算结果保存为测试结果
+                                if env_gamma_val is not None:
+                                    test.result = str(round(env_gamma_val, 4))
                     
                     test.save()
                     success_count += 1
