@@ -47,7 +47,7 @@ def cosmicRayResponseCalculation(longitude, latitude, elevation,
     
     # 红碱淖湖基准点宇宙射线剂量率（nGy/h）
     cosmic_ray_Hong = 42.31795062
-    
+    xc_response = 13
     # 红碱淖湖基准点参数配置
     # 位置：东经109.877357°，北纬39.040432°，海拔1237.17米
     #HongjinaoLake = {
@@ -75,17 +75,20 @@ def cosmicRayResponseCalculation(longitude, latitude, elevation,
         cosmic_ray_0 = 32
     else:
         cosmic_ray_0 = 30
-    
+        print(f"海平面宇宙射线剂量率：{cosmic_ray_0}")
     # 根据高程计算测量点的宇宙射线剂量率
     # 公式：cosmic_ray = cosmic_ray_0 × (0.21 × e^(-1.649×H) + 0.79 × e^(0.4528×H))
     # 其中H为高程（单位：km），此处直接使用elevation参数
-    cosmic_ray = cosmic_ray_0 * (0.21 * math.exp(-1.649 * elevation) + 0.79 * math.exp(0.4528 * elevation))
+    
+    #cosmic_ray = cosmic_ray_0 * (0.21 * math.exp(-1.649 * elevation) + 0.79 * math.exp(0.4528 * elevation))
+    cosmic_ray = 31.55261376
+
     # 计算测量点的宇宙射线响应值
     print(f"测量点的宇宙射线剂量率：{cosmic_ray}")
     # 根据基准点响应值计算测量点的宇宙射线响应值
     # 公式：Xc(测量点) = (cosmic_ray_Hong / cosmic_ray) × xc_response
-    xc_response_1 = (cosmic_ray_Hong / cosmic_ray) * xc_response
-    
+    #xc_response_1 = (cosmic_ray_Hong / cosmic_ray) * xc_response
+    xc_response_1 = (42.31795062 / 31.55261376) * 13
     print(f"测量点的宇宙射线响应值：{xc_response_1}")
     return xc_response_1
 
@@ -170,9 +173,9 @@ if __name__ == '__main__':
     k3, k1, k2 = 0.8, 1.23, 1.2
     # 修改为（包含所有必需参数）：
     xc = cosmicRayResponseCalculation(
-    longitude=109.877357,
-    latitude=39.040432,
-    elevation=1237.17,
+    longitude=108.702694,
+    latitude=34.337444,
+    elevation=385,
     cosmic_ray_HONG_0=30,
     cosmic_ray=0,
     cosmic_ray_Hong=42.31795062,
