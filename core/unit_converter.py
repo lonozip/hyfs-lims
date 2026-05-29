@@ -219,3 +219,54 @@ def convert_from_base_unit(base_value, target_unit):
         return base_value / factor
     except (ValueError, TypeError):
         return None
+
+
+def auto_best_unit(base_value, base_unit, min_val=0.1, max_val=999):
+    """
+    给定基础值和基础单位，自动选择使数值在可读范围内的最佳数量级前缀
+
+    算法：遍历所有可用前缀，找到使转换后的绝对值在 [min_val, max_val) 范围内的前缀。
+    对于 0 值，直接返回基础单位。
+    如果没有前缀能使值落入范围，选择使值最接近 1 的前缀。
+
+    :param base_value: 基础单位下的数值
+    :param base_unit: 基础单位字符串（如 'Gy/h'）
+    :param min_val: 可读范围下限（默认 0.1）
+    :param max_val: 可读范围上限（默认 999）
+    :return: (最佳前缀, 转换后的值, 完整单位字符串)
+             例如: ('n', 123.4, 'nGy/h')
+    """
+    try:
+        base_value = float(base_value)
+    except (ValueError, TypeError):
+        return ('', base_value, base_unit)
+
+    if base_value == 0:
+        return ('', 0.0, base_unit)
+
+    abs_val = abs(base_value)
+
+    best_prefix = ''
+    best_display_value = base_value
+    best_distance = float('inf')
+
+    prefixes_to_try = [
+        ('T', 12), ('G', 9), ('M', 6), ('k', 3),
+        ('', 0),
+        ('m', -3), ('μ', -6), ('n', -9), ('p', -12),
+    ]
+
+    for prefix, exponent in prefixes_to_try:
+        factor = 10 ** exponent
+        display_value = abs_val / factor
+
+        if min_val <= display_value < max_val:
+            return (prefix, base_value / factor, f'{prefix}{base_unit}' if prefix else base_unit)
+
+        distance = abs(display_value - 1)
+        if distance < best_distance:
+            best_distance = distance
+            best_prefix = prefix
+            best_display_value = base_value / factor
+
+    return (best_prefix, best_display_value, f'{best_prefix}{base_unit}' if best_prefix else base_unit)

@@ -22,8 +22,12 @@
                     <input type="text" id="projectSearchInput" class="form-control form-control-sm" placeholder="搜索方案..." onkeyup="filterProjects()">
                 </div>
                 <div class="list-group list-group-flush" id="projectList">
-                    <a href="{% url 'test_list' %}" class="list-group-item list-group-item-action {% if not current_project_id %}active{% endif %} project-item" data-project-name="全部方案">
-                        <i class="bi bi-folder-open"></i> 全部方案
+                    <a href="{% url 'test_list' %}" 
+                       class="list-group-item list-group-item-action {% if not current_project_id %}active{% endif %}"
+                       data-project-id=""
+                       data-project-name="全部方案">
+                        <i class="bi bi-grid"></i> 全部方案
+                        <span class="text-muted text-sm d-block">显示所有方案的测试数据</span>
                     </a>
                     {% for project in all_projects %}
                         <a href="{% url 'test_list_by_project' project.project_id %}" 
@@ -67,9 +71,9 @@
         </div>
 
         <!-- 主内容区域 -->
-        <div class="col-md-9">
+        <div class="col-md-9 d-flex flex-column" style="max-height: calc(100vh - 140px);">
             <!-- 搜索框 -->
-            <div class="mb-3">
+            <div class="mb-3 flex-shrink-0">
                 <form method="get" action="{% if current_project_id %}{% url 'test_list_by_project' current_project_id %}{% else %}{% url 'test_list' %}{% endif %}">
                     <div class="input-group">
                         <input type="text" class="form-control" placeholder="搜索样本ID、样品类型、样品类型描述、状态、结果、地址信息..." name="search" value="{{ search_query }}">
@@ -78,19 +82,24 @@
                 </form>
             </div>
 
-            <!-- 当前方案标题 -->
-            {% if current_project %}
-            <div class="alert alert-info mb-4">
+            <!-- 当前视图标题 -->
+            <div class="alert alert-info mb-3 flex-shrink-0">
+                {% if current_project %}
                 <h4 class="alert-heading">方案: {{ current_project.project_id }} - {{ current_project.name }}</h4>
                 <p class="mb-0">以下是该方案下的所有测试数据</p>
+                {% else %}
+                <h4 class="alert-heading">全部方案</h4>
+                <p class="mb-0">以下是所有方案的测试数据</p>
+                {% endif %}
             </div>
-            {% endif %}
 
-            <!-- 分组卡片布局 -->
-            <div class="space-y-6">
+            <!-- 分组卡片布局 - 可滚动区域 -->
+            <div class="flex-grow-1 overflow-y-auto">
+            {% if grouped_tests %}
+            <div class="space-y-6 pr-1">
                 {% for project_group in grouped_tests %}
                     <!-- 方案分组 -->
-                    <div class="border rounded-lg shadow-sm overflow-hidden">
+                    <div class="border rounded-lg shadow-sm">
                         <!-- 方案标题 -->
                         <div class="bg-primary text-white px-4 py-3">
                             <h3 class="h4 mb-0">{{ project_group.project_name }}</h3>
@@ -389,7 +398,7 @@
                                                 <td>{{ test.id }}</td>
                                                 <td>{{ test.sample.sample_id }}</td>
                                                 <td>{{ test.sample.sample_type.name|default:"-" }}</td>
-                                                <td>{{ test.unit|default:"-" }}</td>
+                                                <td>{{ test.disp_unit|default:"-" }}</td>
                                                 <td>
                                                     {% if test.photo %}
                                                         <img src="{{ test.photo.url }}" alt="测试照片" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
@@ -408,27 +417,27 @@
                                                         <span class="badge bg-danger">已失败</span>
                                                     {% endif %}
                                                 </td>
-                                                <td>{{ test.result }}</td>
+                                                <td>{{ test.disp_result_full|default:"-" }}</td>
                                                 <td>{{ test.address|truncatechars:20 }}</td>
                                                 {% if "辐射" in description or "γ" in description or "γ" in description or "X 射线" in description or "x 射线" in description %}
                                                 <td>{{ test.point_description|default:"-" }}</td>
                                                 <td>{{ test.longitude|default:"-" }}</td>
                                                 <td>{{ test.latitude|default:"-" }}</td>
                                                 <td>{{ test.elevation|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_1|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_2|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_3|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_4|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_5|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_6|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_7|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_8|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_9|default:"-" }}</td>
-                                                <td>{{ test.r_gamma_10|default:"-" }}</td>
-                                                <td>{{ test.cosmic_ray|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_1|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_2|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_3|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_4|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_5|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_6|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_7|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_8|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_9|default:"-" }} nGy/h</td>
+                                                <td>{{ test.r_gamma_10|default:"-" }} nGy/h</td>
+                                                <td>{{ test.disp_cosmic|default:"-" }}</td>
                                                 <td>{{ test.k3|default:"-" }}</td>
-                                                <td>{{ test.avg_value|default:"-" }}</td>
-                                                <td>{{ test.std_value|default:"-" }}</td>
+                                                <td>{{ test.disp_avg|default:"-" }}</td>
+                                                <td>{{ test.disp_std|default:"-" }}</td>
                                                 <td>{{ test.remark|default:"-" }}</td>
                                                 {% endif %}
                                                 <td>{{ test.analyzed_by.username|default:"-" }}</td>
@@ -459,7 +468,8 @@
                                         {% csrf_token %}
                                         <div class="modal-body">
                                             <!-- 隐藏字段存储方案ID和描述信息 -->
-                                            <input type="hidden" name="project_name" value="{{ project_group.project_name }}">
+                                            <input type="hidden" name="project_name" value="{{ project_group.project_id }}">
+                                            <input type="hidden" name="project_id" value="{{ project_group.project_id }}">
                                             <input type="hidden" name="description" value="{{ description }}">
                                             
                                             <div class="alert alert-info">
@@ -518,10 +528,16 @@
             </div>
         {% empty %}
             <div class="text-center py-8">
-                <p class="text-muted">暂无测试数据</p>
+                <p class="text-muted">该方案暂无测试数据</p>
             </div>
         {% endfor %}
     </div>
+            {% else %}
+            <div class="text-center py-8">
+                <p class="text-muted">{% if current_project %}该方案暂无测试数据{% else %}暂无方案或测试数据{% endif %}</p>
+            </div>
+            {% endif %}
+            </div> <!-- 关闭 flex-grow-1 overflow-y-auto -->
         </div> <!-- 关闭 col-md-9 -->
     </div> <!-- 关闭 row -->
 </div> <!-- 关闭分组卡片布局的外层容器 -->

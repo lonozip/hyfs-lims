@@ -1,15 +1,8 @@
-# Django 框架
 Django>=6.0
-
-# Excel 处理
 pandas>=2.2.0
 openpyxl>=3.1.0
-
-# PDF 生成
 weasyprint>=63.0
-
-# 数据库
-django-sqlite3>=0.0.1  # SQLite支持
-
-# 其他依赖
-pillow>=10.0.0  # 图片处理
+Pillow>=10.0.0
+mammoth>=1.6.0
+gunicorn>=22.0
+psycopg2-binary>=2.9

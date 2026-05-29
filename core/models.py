@@ -403,6 +403,48 @@ class Test(models.Model):
                 return (converted_value, target_unit)
         return (self.result, self.unit)
 
+    def get_auto_best_display(self):
+        """
+        自动选择最佳单位进行显示
+        :return: (格式化后的字符串, 最佳单位)
+                 例如: ('1.23', 'μGy/h') 或 ('123', 'nGy/h')
+        """
+        from .unit_converter import auto_best_unit, convert_to_base_unit
+
+        if self.base_value is not None and self.base_unit:
+            _, display_value, display_unit = auto_best_unit(
+                float(self.base_value), self.base_unit
+            )
+            abs_dv = abs(display_value)
+            if abs_dv >= 100:
+                formatted = '{:.0f}'.format(display_value)
+            elif abs_dv >= 10:
+                formatted = '{:.1f}'.format(display_value)
+            elif abs_dv >= 1:
+                formatted = '{:.2f}'.format(display_value)
+            elif abs_dv >= 0.1:
+                formatted = '{:.2f}'.format(display_value)
+            else:
+                formatted = '{:.3f}'.format(display_value)
+            return (formatted, display_unit)
+        if self.result and self.unit:
+            base_value, base_unit = convert_to_base_unit(self.result, self.unit)
+            if base_value is not None:
+                _, display_value, display_unit = auto_best_unit(base_value, base_unit)
+                abs_dv = abs(display_value)
+                if abs_dv >= 100:
+                    formatted = '{:.0f}'.format(display_value)
+                elif abs_dv >= 10:
+                    formatted = '{:.1f}'.format(display_value)
+                elif abs_dv >= 1:
+                    formatted = '{:.2f}'.format(display_value)
+                elif abs_dv >= 0.1:
+                    formatted = '{:.2f}'.format(display_value)
+                else:
+                    formatted = '{:.3f}'.format(display_value)
+                return (formatted, display_unit)
+        return (self.result, self.unit)
+
     class Meta:
         verbose_name = '测试记录'
         verbose_name_plural = '测试记录'

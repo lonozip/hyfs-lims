@@ -240,23 +240,23 @@
             </tr>
         </thead>
         <tbody>
-            {% for test in test_results %}
+            {% for td in test_results_display %}
                 <tr>
-                    <td>{{ test.id }}</td>
-                    <td>{{ test.sample.sample_type_description.description|default:"-" }}</td>
-                    <td>{{ test.sample.sample_id }}</td>
-                    <td class="address-col">{{ test.address|default:"-" }}</td>
+                    <td>{{ td.test.id }}</td>
+                    <td>{{ td.test.sample.sample_type_description.description|default:"-" }}</td>
+                    <td>{{ td.test.sample.sample_id }}</td>
+                    <td class="address-col">{{ td.test.address|default:"-" }}</td>
                     <td>
-                        {% if test.photo %}
-                            <img src="{{ test.photo.path }}" alt="测试照片" class="photo-thumbnail">
+                        {% if td.test.photo %}
+                            <img src="{{ td.test.photo.path }}" alt="测试照片" class="photo-thumbnail">
                         {% else %}
                             -
                         {% endif %}
                     </td>
-                    <td>{{ test.result|default:"-" }}</td>
-                    <td>{{ test.unit|default:"-" }}</td>
-                    <td class="date-col">{{ test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
-                    <td class="status-col">{{ test.get_status_display }}</td>
+                    <td>{{ td.display_result|default:"-" }}</td>
+                    <td>{{ td.display_unit|default:"-" }}</td>
+                    <td class="date-col">{{ td.test.analysis_date|date:"Y-m-d H:i"|default:"-" }}</td>
+                    <td class="status-col">{{ td.test.get_status_display }}</td>
                 </tr>
             {% empty %}
                 <tr>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>环境γ辐射剂量率检测报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #e8e8e8;
+            font-family: "SimSun", "宋体", serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            padding: 20px 0;
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #fff;
+            padding: 20mm 20mm 25mm 20mm;
+            position: relative;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
+        }
+        .a4-page:last-child {
+            page-break-after: auto;
+        }
+
+        .a4-page.auto-height {
+            min-height: auto;
+            page-break-inside: auto;
+        }
+
+        .header-logo { text-align: left; margin-bottom: 8px; }
+        .header-logo img { height: 42px; }
+
+        .report-title {
+            text-align: center;
+            font-size: 22pt;
+            font-weight: bold;
+            font-family: "SimHei", "黑体", sans-serif;
+            letter-spacing: 8pt;
+            margin: 12px 0 4px 0;
+        }
+
+        .report-number {
+            text-align: center;
+            font-size: 11pt;
+            margin-bottom: 12px;
+        }
+        .report-number span { font-weight: bold; }
+
+        .info-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .info-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            font-size: 10pt;
+            vertical-align: middle;
+            overflow-wrap: break-word;
+        }
+        .info-table .label-cell {
+            font-weight: bold;
+            width: 13%;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        .company-info {
+            text-align: center;
+            font-size: 10pt;
+            margin: 15px 0 12px 0;
+            line-height: 1.6;
+        }
+        .company-name {
+            font-size: 12pt;
+            font-weight: bold;
+            font-family: "SimHei", "黑体", sans-serif;
+        }
+
+        .report-notes {
+            margin: 10px 0;
+            font-size: 8.5pt;
+            line-height: 1.45;
+            border: 1px solid #000;
+            padding: 6px 10px;
+        }
+        .report-notes p { margin: 1px 0; }
+        .report-notes .notes-title {
+            font-weight: bold;
+            text-align: center;
+            font-size: 9.5pt;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            font-family: "SimHei", "黑体", sans-serif;
+            margin: 12px 0 6px 0;
+        }
+
+        .data-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 9pt;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            text-align: center;
+            vertical-align: middle;
+            overflow-wrap: break-word;
+            word-break: break-all;
+        }
+        .data-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            font-size: 8.5pt;
+        }
+        .data-table td { font-size: 9pt; }
+        .data-table thead { display: table-header-group; }
+        .data-table tr { page-break-inside: avoid; }
+
+        .signature-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 9.5pt;
+        }
+        .signature-table td {
+            border: 1px solid #000;
+            padding: 30px 6px 6px 6px;
+            text-align: left;
+            vertical-align: bottom;
+            width: 25%;
+            overflow-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .photo-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .photo-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: center;
+            vertical-align: middle;
+            width: 25%;
+            height: 130px;
+        }
+        .photo-table img {
+            max-width: 100%;
+            max-height: 110px;
+            object-fit: contain;
+        }
+
+        .footer-info {
+            text-align: center;
+            font-size: 8pt;
+            margin-top: 8px;
+            color: #555;
+        }
+
+        .page-break { page-break-before: always; }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .a4-page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm 20mm 25mm 20mm;
+                box-shadow: none;
+                margin: 0;
+                overflow: hidden;
+            }
+            .page-wrapper { gap: 0; }
+        }
+
+        @media screen and (max-width: 230mm) {
+            .a4-page { width: 98vw; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ========== 第1页：封面 ========== -->
+    <div class="a4-page">
+
+        <div class="header-logo">
+            {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="logo">
+            {% endif %}
+        </div>
+
+        <div class="report-title">检  测  报  告</div>
+
+        <div class="report-number">
+            <span>{{ report.report_id }}</span>
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td class="label-cell">项目名称：</td>
+                <td style="width:37%">{{ project_order.radiation_project_name|default:project_order.name }}</td>
+                <td class="label-cell">委托单位：</td>
+                <td style="width:37%">{{ project_order.client.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label-cell">检测性质：</td>
+                <td>委托检测</td>
+                <td class="label-cell">报告日期：</td>
+                <td>{{ project_order.radiation_monitoring_date|default:report.created_at|date:"Y年n月j日" }}</td>
+            </tr>
+        </table>
+
+        <div class="company-info">
+            <div class="company-name">陕西秦洲核与辐射安全技术有限公司</div>
+            <div style="margin-top:2px;">（检验检测专用章）</div>
+        </div>
+
+        <div class="report-notes">
+            <div class="notes-title">报告说明</div>
+            <p>1.本报告适用于陕西秦洲核与辐射安全技术有限公司电离辐射、电磁辐射等项目的检测报告。</p>
+            <p>2.本报告无陕西秦洲核与辐射安全技术有限公司"检验检测专用章"、无骑缝章、无章、无编制人、审核人、签发人签字无效。</p>
+            <p>3.现场检测，检测结果仅对当次检测时工况负责，委托方需对自己提供的工况等信息负责。</p>
+            <p>4.如委托单位对本报告检测数据有异议，应于收到本报告之日起十五日内向本公司提出书面申诉，逾期则视为认可检测结果。</p>
+            <p>5.本报告全部或部分复制，私自转让、盗用、冒用、涂改或以其他任何形式篡改的均属无效。</p>
+            <p>6.未经我公司同意，本报告不得用于委托范围之外的其他商业用途。</p>
+            <p>7.*为分包检测结果。</p>
+        </div>
+
+        <div style="text-align:center; font-size:8.5pt; margin-top:12px; line-height:1.5;">
+            <div>名    称：陕西秦洲核与辐射安全技术有限公司</div>
+            <div>地    址：陕西省西咸新区沣西新城中国西部科技创新港创科大厦12层</div>
+            <div>电    话：029-89586445&nbsp;&nbsp;&nbsp;&nbsp;传    真：029-89586445</div>
+            <div>网    址：www.qznrs.net&nbsp;&nbsp;&nbsp;&nbsp;邮政编码：712046</div>
+        </div>
+
+    </div>
+
+    <!-- ========== 第2页：检测仪器 ========== -->
+    <div class="a4-page">
+
+        <div class="section-title">一、检测仪器</div>
+        <div style="text-align:center; font-size:10pt; font-weight:bold; margin:4px 0 8px 0;">表1  检测仪器基本信息</div>
+
+        <table class="info-table">
+            <tr>
+                <td class="label-cell">项目名称</td>
+                <td colspan="3">{{ project_order.radiation_project_name|default:project_order.name }}</td>
+            </tr>
+            <tr>
+                <td class="label-cell">委托单位</td>
+                <td colspan="3">{{ project_order.client.name|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label-cell">检测地点</td>
+                <td colspan="3">{{ project_order.radiation_location|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label-cell">联系人</td>
+                <td>{{ project_order.client.contact_person|default:"-" }}</td>
+                <td class="label-cell">联系电话</td>
+                <td>{{ project_order.client.phone|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label-cell">检测类别</td>
+                <td>电离辐射</td>
+                <td class="label-cell">委托编号</td>
+                <td>{{ project_order.order.order_id|default:"-" }}</td>
+            </tr>
+            {% if project_order.radiation_weather %}
+            <tr>
+                <td class="label-cell">天气状况</td>
+                <td>{{ project_order.radiation_weather }}</td>
+                <td class="label-cell">温度/湿度</td>
+                <td>{{ project_order.radiation_temperature|default:"-" }}℃ / {{ project_order.radiation_humidity|default:"-" }}%</td>
+            </tr>
+            {% endif %}
+            {% if project_order.radiation_basis %}
+            <tr>
+                <td class="label-cell">监测依据</td>
+                <td colspan="3">{{ project_order.radiation_basis }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:22%">仪器名称</th>
+                    <th style="width:14%">仪器型号</th>
+                    <th style="width:14%">仪器编号</th>
+                    <th style="width:18%">测量范围</th>
+                    <th style="width:20%">溯源单位/证书编号</th>
+                    <th style="width:12%">有效期至</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if instrument_list %}
+                    {% for inst in instrument_list %}
+                    <tr>
+                        <td>{{ inst.name|default:"辐射防护用X、γ辐射周围剂量当量率仪" }}</td>
+                        <td>{{ inst.model|default:"-" }}</td>
+                        <td>{{ inst.code|default:"-" }}</td>
+                        <td>{{ inst.range|default:"（0.01~600.00）μSv/h" }}</td>
+                        <td>{{ inst.cert|default:"-" }}</td>
+                        <td>{{ inst.expire_date|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>辐射防护用X、γ辐射周围剂量当量率仪</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>（0.01~600.00）μSv/h</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- ========== 第3页起：检测结果 ========== -->
+    <div class="a4-page auto-height">
+
+        <div class="section-title">二、检测结果</div>
+        <div style="text-align:center; font-size:10pt; font-weight:bold; margin:4px 0 8px 0;">表2  辐射环境检测结果</div>
+
+        {% if project_order.radiation_weather or project_order.radiation_temperature %}
+        <div style="font-size:9pt; margin:4px 0;">
+            {% if project_order.radiation_weather %}天气：{{ project_order.radiation_weather }}&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}
+            {% if project_order.radiation_temperature %}温度：{{ project_order.radiation_temperature }}℃&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}
+            {% if project_order.radiation_humidity %}湿度：{{ project_order.radiation_humidity }}%{% endif %}
+        </div>
+        {% endif %}
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:8%">序号</th>
+                    <th style="width:42%">检测点位描述</th>
+                    <th style="width:25%">γ辐射空气吸收<br>剂量率</th>
+                    <th style="width:25%">γ辐射空气吸收<br>剂量率</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>平均值</th>
+                    <th>标准差</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if test_data_list %}
+                    {% for td in test_data_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="text-align:left; padding-left:8px;">{{ td.point_description|default:"-" }}</td>
+                        <td>{{ td.avg_value|default:"-" }} {{ td.avg_unit }}</td>
+                        <td>{{ td.std_value|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>1</td><td>-</td><td>-</td><td>-</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div style="text-align:center; font-size:11pt; margin:18px 0 10px 0;">（报告正文完）</div>
+
+        <table class="signature-table">
+            <tr>
+                <td>编 制 人：{{ report.created_by.get_full_name|default:report.created_by.username|default:"" }}</td>
+                <td>审 核 人：</td>
+                <td>签 发 人：</td>
+                <td>签发日期：{{ report.updated_at|date:"Y年n月j日" }}</td>
+            </tr>
+        </table>
+
+    </div>
+
+    <!-- ========== 照片页 ========== -->
+    {% if test_photos %}
+        {% for photo_row in photo_rows %}
+        <div class="a4-page">
+
+            {% if forloop.first %}
+            <div class="section-title" style="text-align:center;">附件：</div>
+            <div class="section-title" style="text-align:center;">现场检测照片</div>
+            {% endif %}
+
+            <table class="photo-table" style="margin-top:{% if forloop.first %}10px{% else %}20mm{% endif %};">
+                <tr>
+                    {% for photo in photo_row %}
+                    <td>
+                        {% if photo.photo_url %}
+                        <img src="{{ photo.photo_url }}" alt="现场照片">
+                        <div style="font-size:8pt; margin-top:4px;">{{ photo.point_description|default:"" }}</div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    {% for slot in "xxxx" %}
+                        {% if forloop.counter > photo_row|length %}
+                            <td></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </table>
+
+        </div>
+        {% endfor %}
+    {% endif %}
+
+</div>
+
+</body>
+</html>

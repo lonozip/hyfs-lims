@@ -1,5 +1,6 @@
 # 导入Django快捷函数
 from django.shortcuts import render, get_object_or_404, redirect
+from django.conf import settings
 # 导入登录验证装饰器
 from django.contrib.auth.decorators import login_required
 # 导入权限装饰器
@@ -507,14 +508,30 @@ def sample_edit(request, pk):
 @login_required
 @require_permission('can_manage_tests')
 def test_list(request, project_id=None):
-    """测试列表视图函数 - 支持按方案分页显示"""
-    # 获取搜索关键词
+    """测试列表视图函数 - 按方案显示测试数据"""
+    from .unit_converter import auto_best_unit
+
+    def fmt_best_unit_pair(raw_value, base_unit='Gy/h'):
+        if raw_value is None:
+            return ('-', '')
+        val_in_base = float(raw_value) * 1e-9
+        _, display_value, display_unit = auto_best_unit(val_in_base, base_unit)
+        abs_dv = abs(display_value)
+        if abs_dv >= 100:
+            return ('{:.0f}'.format(display_value), display_unit)
+        elif abs_dv >= 10:
+            return ('{:.1f}'.format(display_value), display_unit)
+        elif abs_dv >= 1:
+            return ('{:.2f}'.format(display_value), display_unit)
+        elif abs_dv >= 0.1:
+            return ('{:.2f}'.format(display_value), display_unit)
+        else:
+            return ('{:.3f}'.format(display_value), display_unit)
+
     search_query = request.GET.get('search', '')
     
-    # 获取所有方案（用于导航）
     all_projects = Project_Order.objects.all().order_by('project_id')
     
-    # 获取当前方案信息
     current_project = None
     if project_id:
         try:
@@ -522,90 +539,89 @@ def test_list(request, project_id=None):
         except Project_Order.DoesNotExist:
             project_id = None
     
-    # 获取测试数据，使用select_related优化查询
-    tests = Test.objects.select_related(
-        'sample', 
-        'sample__sample_type', 
-        'sample__project_order',
-        'analyzed_by',
-        'verified_by'
-    ).prefetch_related(
-        'sample__sample_type_description'
-    )
-    
-    # 如果指定了方案，只显示该方案的测试
-    if project_id:
-        tests = tests.filter(sample__project_order__project_id=project_id)
-    
-    # 按方案和样品描述排序
-    tests = tests.order_by(
-        'sample__project_order__project_id',
-        'sample__sample_type_description__description'
-    )
-    
-    # 如果有搜索关键词，进行模糊搜索
-    if search_query:
-        from django.db.models import Q
-        tests = tests.filter(
-            Q(sample__sample_id__icontains=search_query) |
-            Q(sample__sample_type__name__icontains=search_query) |
-            Q(sample__sample_type_description__description__icontains=search_query) |
-            Q(status__icontains=search_query) |
-            Q(result__icontains=search_query) |
-            Q(address__icontains=search_query) |
-            Q(analyzed_by__username__icontains=search_query) |
-            Q(verified_by__username__icontains=search_query)
-        )
-    
-    # 将测试按方案分组（如果没有指定方案），否则按样品描述分组
     grouped_tests = []
     
-    if project_id and current_project:
-        # 单方案模式：按样品描述分组
-        descriptions = {}
-        project_key = f"{current_project.project_id} - {current_project.name}"
+    project_ids_to_show = [current_project.project_id] if current_project else list(
+        all_projects.values_list('project_id', flat=True)
+    )
+    
+    for pid in project_ids_to_show:
+        project = current_project if (current_project and pid == current_project.project_id) else all_projects.get(project_id=pid)
+        project_key = f"{project.project_id} - {project.name}"
         
+        tests = Test.objects.select_related(
+            'sample',
+            'sample__sample_type',
+            'sample__project_order',
+            'analyzed_by',
+            'verified_by'
+        ).prefetch_related(
+            'sample__sample_type_description'
+        ).filter(
+            sample__project_order__project_id=pid
+        ).order_by(
+            'sample__sample_type_description__description'
+        )
+        
+        if search_query:
+            from django.db.models import Q
+            tests = tests.filter(
+                Q(sample__sample_id__icontains=search_query) |
+                Q(sample__sample_type__name__icontains=search_query) |
+                Q(sample__sample_type_description__description__icontains=search_query) |
+                Q(status__icontains=search_query) |
+                Q(result__icontains=search_query) |
+                Q(address__icontains=search_query) |
+                Q(analyzed_by__username__icontains=search_query) |
+                Q(verified_by__username__icontains=search_query)
+            )
+        
+        if not tests.exists():
+            continue
+        
+        descriptions = {}
         for test in tests:
             sample_desc = test.sample.sample_type_description.description if test.sample and test.sample.sample_type_description else "无描述"
             
             if sample_desc not in descriptions:
                 descriptions[sample_desc] = []
+            
+            dr, du = test.get_auto_best_display()
+            if not du and test.avg_value is not None and test.result:
+                val_in_base = float(test.result) * 1e-9
+                _, dv, du2 = auto_best_unit(val_in_base, 'Gy/h')
+                abs_dv = abs(dv)
+                if abs_dv >= 100:
+                    dr = '{:.0f}'.format(dv)
+                elif abs_dv >= 10:
+                    dr = '{:.1f}'.format(dv)
+                elif abs_dv >= 1:
+                    dr = '{:.2f}'.format(dv)
+                elif abs_dv >= 0.1:
+                    dr = '{:.2f}'.format(dv)
+                else:
+                    dr = '{:.3f}'.format(dv)
+                du = du2
+            test.disp_result = dr
+            test.disp_unit = du
+            test.disp_result_full = '{} {}'.format(dr, du) if du else dr
+            avg_val, avg_unit = fmt_best_unit_pair(test.avg_value)
+            test.disp_avg = '{} {}'.format(avg_val, avg_unit) if avg_unit else avg_val
+            test.disp_avg_num = avg_val
+            std_val, _ = fmt_best_unit_pair(test.std_value)
+            test.disp_std = std_val
+            cosmic_val, cosmic_unit = fmt_best_unit_pair(test.cosmic_ray)
+            test.disp_cosmic = '{} {}'.format(cosmic_val, cosmic_unit) if cosmic_unit else cosmic_val
             descriptions[sample_desc].append(test)
         
         grouped_tests.append({
-            'project_id': current_project.project_id,
+            'project_id': project.project_id,
             'project_name': project_key,
             'descriptions': descriptions
         })
-    else:
-        # 多方案模式：按方案分组，每个方案内再按样品描述分组
-        current_project_key = None
-        
-        for test in tests:
-            project_order = test.sample.project_order if test.sample else None
-            proj_id = project_order.project_id if project_order else "无方案"
-            proj_name = project_order.name if project_order else ""
-            project_key = f"{proj_id} - {proj_name}" if project_order else "无方案"
-            sample_desc = test.sample.sample_type_description.description if test.sample and test.sample.sample_type_description else "无描述"
-            
-            # 如果是新的方案，添加新的方案组
-            if current_project_key != project_key:
-                grouped_tests.append({
-                    'project_id': proj_id,
-                    'project_name': project_key,
-                    'descriptions': {}
-                })
-                current_project_key = project_key
-            
-            # 添加测试到对应的描述组
-            current_group = grouped_tests[-1]
-            if sample_desc not in current_group['descriptions']:
-                current_group['descriptions'][sample_desc] = []
-            current_group['descriptions'][sample_desc].append(test)
     
-    # 渲染测试列表模板
     return render(request, 'core/test_list.html', {
-        'grouped_tests': grouped_tests, 
+        'grouped_tests': grouped_tests,
         'search_query': search_query,
         'all_projects': all_projects,
         'current_project_id': project_id,
@@ -1735,6 +1751,31 @@ def report_detail(request, pk):
     test_results = []
     if project_order:
         test_results = Test.objects.filter(sample__project_order=project_order)
+    # 为测试结果预计算最佳显示单位和值
+    test_results_display = []
+    for t in test_results:
+        display_result, display_unit = t.get_auto_best_display()
+        if not display_unit and t.avg_value is not None and t.result:
+            from .unit_converter import auto_best_unit
+            val_in_base = float(t.result) * 1e-9
+            _, dv, du = auto_best_unit(val_in_base, 'Gy/h')
+            abs_dv = abs(dv)
+            if abs_dv >= 100:
+                display_result = '{:.0f}'.format(dv)
+            elif abs_dv >= 10:
+                display_result = '{:.1f}'.format(dv)
+            elif abs_dv >= 1:
+                display_result = '{:.2f}'.format(dv)
+            elif abs_dv >= 0.1:
+                display_result = '{:.2f}'.format(dv)
+            else:
+                display_result = '{:.3f}'.format(dv)
+            display_unit = du
+        test_results_display.append({
+            'test': t,
+            'display_result': display_result,
+            'display_unit': display_unit,
+        })
     # 获取该方案关联的所有标准
     standards = project_order.standards.all() if project_order else []
     # 获取该方案关联的所有样品类型描述
@@ -1745,7 +1786,7 @@ def report_detail(request, pk):
         'project_order': project_order,
         'samples': samples,
         'standards': standards,
-        'test_results': test_results,
+        'test_results_display': test_results_display,
         'sample_type_descriptions': sample_type_descriptions
     })
 
@@ -1764,6 +1805,31 @@ def generate_pdf_report(request, pk):
     test_results = []
     if project_order:
         test_results = Test.objects.filter(sample__project_order=project_order)
+    # 为测试结果预计算最佳显示单位和值
+    test_results_display = []
+    for t in test_results:
+        display_result, display_unit = t.get_auto_best_display()
+        if not display_unit and t.avg_value is not None and t.result:
+            from .unit_converter import auto_best_unit
+            val_in_base = float(t.result) * 1e-9
+            _, dv, du = auto_best_unit(val_in_base, 'Gy/h')
+            abs_dv = abs(dv)
+            if abs_dv >= 100:
+                display_result = '{:.0f}'.format(dv)
+            elif abs_dv >= 10:
+                display_result = '{:.1f}'.format(dv)
+            elif abs_dv >= 1:
+                display_result = '{:.2f}'.format(dv)
+            elif abs_dv >= 0.1:
+                display_result = '{:.2f}'.format(dv)
+            else:
+                display_result = '{:.3f}'.format(dv)
+            display_unit = du
+        test_results_display.append({
+            'test': t,
+            'display_result': display_result,
+            'display_unit': display_unit,
+        })
     # 获取该方案关联的所有标准
     standards = project_order.standards.all() if project_order else []
     
@@ -1773,7 +1839,7 @@ def generate_pdf_report(request, pk):
         'project_order': project_order,
         'samples': samples,
         'standards': standards,
-        'test_results': test_results
+        'test_results_display': test_results_display
     })
     
     # 生成PDF
@@ -1799,6 +1865,107 @@ def generate_pdf_report(request, pk):
     # 显示成功消息
     messages.success(request, 'PDF报告生成成功！')
     return redirect('report_detail', pk=pk)
+
+
+@login_required
+def generate_radiation_report(request, pk):
+    """一键生成辐射检测报告HTML视图函数"""
+    import re
+    from .unit_converter import auto_best_unit
+    
+    report = get_object_or_404(Report, pk=pk)
+    project_order = report.project_order
+    
+    instrument_list = []
+    if project_order and project_order.instrument_info:
+        for item in project_order.instrument_info:
+            instrument_list.append({
+                'name': item.get('name', '辐射防护用X、γ辐射周围剂量当量率仪'),
+                'model': item.get('model', '-'),
+                'code': item.get('code', '-'),
+                'range': item.get('range', '（0.01~600.00）μSv/h'),
+                'cert': item.get('cert', '-'),
+                'expire_date': item.get('expire_date', '-'),
+            })
+    
+    def format_with_best_unit(raw_value, base_unit='Gy/h'):
+        if raw_value is None:
+            return ('-', base_unit)
+        val_in_base = float(raw_value) * 1e-9
+        _, display_value, display_unit = auto_best_unit(val_in_base, base_unit)
+        abs_dv = abs(display_value)
+        if abs_dv >= 100:
+            return ('{:.0f}'.format(display_value), display_unit)
+        elif abs_dv >= 10:
+            return ('{:.1f}'.format(display_value), display_unit)
+        elif abs_dv >= 1:
+            return ('{:.2f}'.format(display_value), display_unit)
+        elif abs_dv >= 0.1:
+            return ('{:.2f}'.format(display_value), display_unit)
+        else:
+            return ('{:.3f}'.format(display_value), display_unit)
+    
+    test_data_list = []
+    test_photos = []
+    if project_order:
+        tests = Test.objects.filter(
+            sample__project_order=project_order,
+            point_description__isnull=False  # no null
+        ).exclude(
+            point_description=''  # no empty
+        ).order_by('sample__sample_type_description__description', 'id')
+        
+        for t in tests:
+            avg_str, avg_unit = format_with_best_unit(t.avg_value)
+            std_str, std_unit = format_with_best_unit(t.std_value)
+            test_data_list.append({
+                'point_description': t.point_description or '-',
+                'avg_value': avg_str,
+                'avg_unit': avg_unit,
+                'std_value': std_str,
+                'std_unit': std_unit,
+            })
+            if t.photo:
+                try:
+                    photo_url = t.photo.url
+                except Exception:
+                    photo_url = None
+                test_photos.append({
+                    'photo_url': photo_url,
+                    'point_description': t.point_description or '',
+                })
+    
+    # chunk photos into rows of 4
+    photo_rows = [test_photos[i:i+4] for i in range(0, len(test_photos), 4)]
+    
+    logo_base64 = None
+    logo_path = os.path.join(settings.BASE_DIR, '导入资料', 'logo_base64.txt')
+    try:
+        with open(logo_path, 'r', encoding='utf-8') as f:
+            logo_base64 = f.read().strip()
+    except Exception:
+        pass
+    
+    if not logo_base64:
+        template_html_path = os.path.join(settings.BASE_DIR, '导入资料', '20250813环境γ辐射剂量率检测报告模版.html')
+        try:
+            with open(template_html_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            imgs = re.findall(r'<img[^>]+src="(data:image/[^"]+)"', html_content)
+            if imgs:
+                logo_base64 = imgs[0]
+        except Exception:
+            pass
+    
+    return render(request, 'core/report_radiation.html', {
+        'report': report,
+        'project_order': project_order,
+        'instrument_list': instrument_list,
+        'test_data_list': test_data_list,
+        'test_photos': test_photos,
+        'photo_rows': photo_rows,
+        'logo_base64': logo_base64,
+    })
 
 
 @login_required
@@ -2703,6 +2870,8 @@ def test_import_excel(request):
         except Exception as e:
             messages.error(request, f'导入失败：{str(e)}')
         
+        if project_id:
+            return redirect('test_list_by_project', project_id=project_id)
         return redirect('test_list')
     
     return redirect('test_list')

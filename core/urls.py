@@ -91,6 +91,8 @@ urlpatterns = [
     path('reports/<int:pk>/approve/', views.report_approve, name='report_approve'),
     # 报告生成PDF URL
     path('reports/<int:pk>/generate_pdf/', views.generate_pdf_report, name='generate_pdf_report'),
+    # 一键生成辐射检测报告 URL
+    path('reports/<int:pk>/generate_radiation_report/', views.generate_radiation_report, name='generate_radiation_report'),
     # 报告删除URL
     path('reports/<int:pk>/delete/', views.report_delete, name='report_delete'),
     # 标准管理URL

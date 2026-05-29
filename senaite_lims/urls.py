@@ -55,11 +55,6 @@ urlpatterns = [
     path('standard/', include('standard.urls')),
 ]
 
-# 在开发模式下添加静态文件和媒体文件的URL配置
-# 在Django开发模式下，不需要单独配置静态文件URL，Django会自动处理
-# if settings.DEBUG:
-#     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-# 添加媒体文件 URL 映射
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
