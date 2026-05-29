@@ -197,7 +197,7 @@ def create_measurement_sheet(wb):
                          bottom=Side(style='thin'))
     
     # 标题
-    ws.merge_cells('A1:O1')
+    ws.merge_cells('A1:T1')
     ws['A1'] = "二、测量记录"
     ws['A1'].font = title_font
     ws['A1'].fill = title_fill
@@ -208,6 +208,7 @@ def create_measurement_sheet(wb):
     headers = [
         "序号", "点位描述", "经度（E）", "纬度（N）", "高程（H）",
         "仪器示值Rγ(1)", "仪器示值Rγ(2)", "仪器示值Rγ(3)", "仪器示值Rγ(4)", "仪器示值Rγ(5)",
+        "仪器示值Rγ(6)", "仪器示值Rγ(7)", "仪器示值Rγ(8)", "仪器示值Rγ(9)", "仪器示值Rγ(10)",
         "宇宙射线", "k3", "平均值", "标准差", "备注"
     ]
     
@@ -227,7 +228,7 @@ def create_measurement_sheet(wb):
         ws[f'A{row}'].border = thin_border
         ws[f'A{row}'].fill = even_fill if (row - 2) % 2 == 0 else PatternFill(start_color="ffffff", end_color="ffffff", fill_type="solid")
         
-        for col in range(2, 16):
+        for col in range(2, 21):
             ws[f'{get_column_letter(col)}{row}'] = ""
             ws[f'{get_column_letter(col)}{row}'].font = normal_font
             ws[f'{get_column_letter(col)}{row}'].alignment = left_alignment if col == 2 else center_alignment
@@ -249,11 +250,16 @@ def create_measurement_sheet(wb):
     ws.column_dimensions['H'].width = 14
     ws.column_dimensions['I'].width = 14
     ws.column_dimensions['J'].width = 14
-    ws.column_dimensions['K'].width = 12
-    ws.column_dimensions['L'].width = 6
-    ws.column_dimensions['M'].width = 10
-    ws.column_dimensions['N'].width = 10
-    ws.column_dimensions['O'].width = 12
+    ws.column_dimensions['K'].width = 14
+    ws.column_dimensions['L'].width = 14
+    ws.column_dimensions['M'].width = 14
+    ws.column_dimensions['N'].width = 14
+    ws.column_dimensions['O'].width = 14
+    ws.column_dimensions['P'].width = 12
+    ws.column_dimensions['Q'].width = 6
+    ws.column_dimensions['R'].width = 10
+    ws.column_dimensions['S'].width = 10
+    ws.column_dimensions['T'].width = 12
 
 def create_calc_sheet(wb):
     """创建计算说明工作表"""

@@ -317,12 +317,17 @@ class Test(models.Model):
     latitude = models.DecimalField(max_digits=15, decimal_places=10, null=True, blank=True, verbose_name='纬度（N）')
     # 高程（H）
     elevation = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='高程（H）')
-    # 仪器示值Rγ(1-5)
+    # 仪器示值Rγ(1-10)
     r_gamma_1 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(1)')
     r_gamma_2 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(2)')
     r_gamma_3 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(3)')
     r_gamma_4 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(4)')
     r_gamma_5 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(5)')
+    r_gamma_6 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(6)')
+    r_gamma_7 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(7)')
+    r_gamma_8 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(8)')
+    r_gamma_9 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(9)')
+    r_gamma_10 = models.FloatField(null=True, blank=True, verbose_name='仪器示值Rγ(10)')
     # 宇宙射线
     cosmic_ray = models.FloatField(null=True, blank=True, verbose_name='宇宙射线')
     # k3

@@ -2140,7 +2140,9 @@ def test_import_excel(request):
                 # 辐射剂量率类型必需的列（支持"样本ID"或"序号"作为样本标识）
                 required_columns = ['点位描述', '经度（E）', '纬度（N）', '高程（H）', 
                                    '仪器示值Rγ(1)', '仪器示值Rγ(2)', '仪器示值Rγ(3)', 
-                                   '仪器示值Rγ(4)', '仪器示值Rγ(5)', '宇宙射线', 'k3', '平均值', '标准差', '备注']
+                                   '仪器示值Rγ(4)', '仪器示值Rγ(5)', '仪器示值Rγ(6)', 
+                                   '仪器示值Rγ(7)', '仪器示值Rγ(8)', '仪器示值Rγ(9)', 
+                                   '仪器示值Rγ(10)', '宇宙射线', 'k3', '平均值', '标准差', '备注']
             else:
                 # 普通类型必需的列
                 required_columns = ['样本ID', '结果', '地址信息', '分析人员', '分析日期']
@@ -2384,6 +2386,11 @@ def test_import_excel(request):
                         r3 = get_value('仪器示值Rγ(3)')
                         r4 = get_value('仪器示值Rγ(4)')
                         r5 = get_value('仪器示值Rγ(5)')
+                        r6 = get_value('仪器示值Rγ(6)')
+                        r7 = get_value('仪器示值Rγ(7)')
+                        r8 = get_value('仪器示值Rγ(8)')
+                        r9 = get_value('仪器示值Rγ(9)')
+                        r10 = get_value('仪器示值Rγ(10)')
                         cosmic_ray = get_value('宇宙射线')
                         k3 = get_value('k3')
                         avg_value = get_value('平均值')
@@ -2515,6 +2522,26 @@ def test_import_excel(request):
                         except ValueError:
                             test.r_gamma_5 = None
                         try:
+                            test.r_gamma_6 = float(r6) if r6 else None
+                        except ValueError:
+                            test.r_gamma_6 = None
+                        try:
+                            test.r_gamma_7 = float(r7) if r7 else None
+                        except ValueError:
+                            test.r_gamma_7 = None
+                        try:
+                            test.r_gamma_8 = float(r8) if r8 else None
+                        except ValueError:
+                            test.r_gamma_8 = None
+                        try:
+                            test.r_gamma_9 = float(r9) if r9 else None
+                        except ValueError:
+                            test.r_gamma_9 = None
+                        try:
+                            test.r_gamma_10 = float(r10) if r10 else None
+                        except ValueError:
+                            test.r_gamma_10 = None
+                        try:
                             test.cosmic_ray = float(cosmic_ray) if cosmic_ray else None
                         except ValueError:
                             test.cosmic_ray = None
@@ -2534,8 +2561,9 @@ def test_import_excel(request):
                     
                         # 自动计算平均值、标准差和环境γ辐射剂量率
                         if is_radiation:
-                            # 获取5次仪器示值
-                            r_vals = [test.r_gamma_1, test.r_gamma_2, test.r_gamma_3, test.r_gamma_4, test.r_gamma_5]
+                            # 获取10次仪器示值
+                            r_vals = [test.r_gamma_1, test.r_gamma_2, test.r_gamma_3, test.r_gamma_4, test.r_gamma_5,
+                                      test.r_gamma_6, test.r_gamma_7, test.r_gamma_8, test.r_gamma_9, test.r_gamma_10]
                             
                             # 检查是否有有效的仪器示值
                             valid_r = [v for v in r_vals if v is not None]
@@ -2546,7 +2574,12 @@ def test_import_excel(request):
                                     test.r_gamma_2 or 0,
                                     test.r_gamma_3 or 0,
                                     test.r_gamma_4 or 0,
-                                    test.r_gamma_5 or 0
+                                    test.r_gamma_5 or 0,
+                                    test.r_gamma_6 or 0,
+                                    test.r_gamma_7 or 0,
+                                    test.r_gamma_8 or 0,
+                                    test.r_gamma_9 or 0,
+                                    test.r_gamma_10 or 0
                                 )
                                 
                                 # 总是使用计算值覆盖（即使Excel中有值）
@@ -2565,30 +2598,21 @@ def test_import_excel(request):
                                         k1 = float(instrument_info_data[0].get('k1', 1.0))
                                         k2 = float(instrument_info_data[0].get('k2', 1.0))
                                 
+                                # 获取屏蔽修正因子（需要在调用计算函数前定义）
+                                k3_val = test.k3 or 1.0
+                                
                                 # 计算宇宙射线响应值
                                 # 如果有经纬度和高程，使用计算模块计算
                                 calculated_xc = None
                                 if test.longitude and test.latitude and test.elevation:
                                     try:
-                                        # 使用基准点参数计算宇宙射线响应值
-                                        # 参数：经度, 纬度, 高程, r_gamma_1~5, cosmic_ray_HONG_0, cosmic_ray, cosmic_ray_Hong, k3, xc_response, xc_response_1, SinlanmudaM, lanmudaM
+                                        # 调用简化后的函数：cosmicRayResponseCalculation(longitude, latitude, elevation, k3, xc_response)
                                         calculated_xc = cosmicRayResponseCalculation(
-                                            test.longitude,
-                                            test.latitude,
-                                            test.elevation,
-                                            test.r_gamma_1 or 0,
-                                            test.r_gamma_2 or 0,
-                                            test.r_gamma_3 or 0,
-                                            test.r_gamma_4 or 0,
-                                            test.r_gamma_5 or 0,
-                                            30,      # cosmic_ray_HONG_0
-                                            0,       # cosmic_ray
-                                            42.31795062,  # cosmic_ray_Hong
-                                            k3_val,  # k3
-                                            13,      # xc_response (基准点响应值)
-                                            0,       # xc_response_1
-                                            0,       # SinlanmudaM
-                                            0        # lanmudaM
+                                            test.longitude,     # 经度
+                                            test.latitude,      # 纬度
+                                            test.elevation,     # 高程（米），函数内自动转为km
+                                            k3_val,             # 屏蔽修正因子
+                                            13                  # 基准点宇宙射线响应值
                                         )
                                     except Exception as calc_e:
                                         print(f"计算宇宙射线响应值失败: {calc_e}")
@@ -2599,9 +2623,6 @@ def test_import_excel(request):
                                 # 更新test的cosmic_ray字段为计算值
                                 if calculated_xc:
                                     test.cosmic_ray = calculated_xc
-                                
-                                # 获取屏蔽修正因子
-                                k3_val = test.k3 or 1.0
                                 
                                 # 计算环境γ辐射剂量率
                                 env_gamma_val = calculate_env_gamma(
@@ -2694,6 +2715,7 @@ def test_import_template(request):
     import pandas as pd
     from io import BytesIO
     import os
+    from urllib.parse import quote
     
     # 获取查询参数
     project_name = request.GET.get('project', '')
@@ -2722,7 +2744,10 @@ def test_import_template(request):
                 template_content,
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-            response['Content-Disposition'] = f'attachment; filename="环境γ辐射剂量率测量记录表_{project_id}_{description}.xlsx"'
+            # 使用URL编码处理中文文件名，确保浏览器正确显示
+            filename = f'测试X、γ辐射剂量率导入模版_{project_id}_{description}.xlsx'
+            encoded_filename = quote(filename, safe='')
+            response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
             return response
     
     # 普通类型模板
@@ -2778,7 +2803,10 @@ def test_import_template(request):
         output.read(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = f'attachment; filename="测试数据导入模板_{project_id}_{description}.xlsx"'
+    # 使用URL编码处理中文文件名，确保浏览器正确显示
+    filename = f'测试数据导入模板_{project_id}_{description}.xlsx'
+    encoded_filename = quote(filename, safe='')
+    response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
     
     return response
 
@@ -2912,6 +2940,8 @@ def import_template_delete(request, template_id):
 @require_permission('can_manage_samples')
 def import_template_download(request, template_id):
     """下载导入模板"""
+    from urllib.parse import quote
+    
     template = get_object_or_404(ImportTemplate, pk=template_id)
     
     if template.template_file:
@@ -2921,7 +2951,9 @@ def import_template_download(request, template_id):
         if fs.exists(template.template_file.name):
             with open(file_path, 'rb') as f:
                 response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = f'attachment; filename="{template.name}.xlsx"'
+                filename = f'{template.name}.xlsx'
+                encoded_filename = quote(filename, safe='')
+                response['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_filename}"
                 return response
     
     messages.error(request, '模板文件不存在')

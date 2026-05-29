@@ -367,6 +367,11 @@
                                                 <th>Rγ(3)</th>
                                                 <th>Rγ(4)</th>
                                                 <th>Rγ(5)</th>
+                                                <th>Rγ(6)</th>
+                                                <th>Rγ(7)</th>
+                                                <th>Rγ(8)</th>
+                                                <th>Rγ(9)</th>
+                                                <th>Rγ(10)</th>
                                                 <th>宇宙射线</th>
                                                 <th>k3</th>
                                                 <th>平均值</th>
@@ -415,6 +420,11 @@
                                                 <td>{{ test.r_gamma_3|default:"-" }}</td>
                                                 <td>{{ test.r_gamma_4|default:"-" }}</td>
                                                 <td>{{ test.r_gamma_5|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_6|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_7|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_8|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_9|default:"-" }}</td>
+                                                <td>{{ test.r_gamma_10|default:"-" }}</td>
                                                 <td>{{ test.cosmic_ray|default:"-" }}</td>
                                                 <td>{{ test.k3|default:"-" }}</td>
                                                 <td>{{ test.avg_value|default:"-" }}</td>
@@ -457,7 +467,7 @@
                                                 <ul class="mb-0">
                                                     <li>请下载模板文件，按照模板格式填写数据</li>
                                                     {% if "辐射" in description or "γ" in description or "γ" in description or "X射线" in description or "x射线" in description %}
-                                                    <li>Excel文件需包含以下列：样本ID、点位描述、经度（E）、纬度（N）、高程（H）、仪器示值Rγ(1-5)、宇宙射线、k3、平均值、标准差、备注</li>
+                                                    <li>Excel文件需包含以下列：样本ID、点位描述、经度（E）、纬度（N）、高程（H）、仪器示值Rγ(1-10)、宇宙射线、k3、平均值、标准差、备注</li>
                                                     <li>平均值将作为测试结果导入，点位描述将作为地址信息导入</li>
                                                     {% else %}
                                                     <li>Excel文件需包含以下列：样本ID、结果、地址信息、分析人员、分析日期</li>
