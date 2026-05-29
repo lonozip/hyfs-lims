@@ -1,5 +1,6 @@
 import mammoth
 import os
+import sys
 import io
 import base64
 import zipfile
@@ -12,9 +13,14 @@ except ImportError:
     HAS_PIL = False
     print("警告: Pillow 未安装")
 
-docx_path = r"导入资料\20250813环境γ辐射剂量率检测报告模版.docx"
-html_path = r"导入资料\20250813环境γ辐射剂量率检测报告模版.html"
-image_dir = r"导入资料\docx_images"
+if len(sys.argv) >= 2:
+    docx_path = sys.argv[1]
+else:
+    docx_path = r"导入资料\20250813环境γ辐射剂量率检测报告模版.docx"
+
+base_name = os.path.splitext(os.path.basename(docx_path))[0]
+html_path = os.path.join(os.path.dirname(docx_path), f"{base_name}.html") if os.path.dirname(docx_path) else f"{base_name}.html"
+image_dir = os.path.join(os.path.dirname(docx_path) or ".", "docx_images")
 os.makedirs(image_dir, exist_ok=True)
 
 image_map = {}
@@ -30,9 +36,6 @@ with zipfile.ZipFile(docx_path, 'r') as z:
         ext = os.path.splitext(fname)[1].lower()
 
         r_id = None
-        for n in z.namelist():
-            if n.endswith('_rels'):
-                pass
         try:
             rels_data = z.read('word/_rels/document.xml.rels').decode('utf-8')
             import xml.etree.ElementTree as ET

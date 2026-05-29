@@ -546,7 +546,9 @@ def test_list(request, project_id=None):
     )
     
     for pid in project_ids_to_show:
-        project = current_project if (current_project and pid == current_project.project_id) else all_projects.get(project_id=pid)
+        project = current_project if (current_project and pid == current_project.project_id) else all_projects.filter(project_id=pid).first()
+        if project is None:
+            continue
         project_key = f"{project.project_id} - {project.name}"
         
         tests = Test.objects.select_related(
@@ -2307,9 +2309,7 @@ def test_import_excel(request):
                 # 辐射剂量率类型必需的列（支持"样本ID"或"序号"作为样本标识）
                 required_columns = ['点位描述', '经度（E）', '纬度（N）', '高程（H）', 
                                    '仪器示值Rγ(1)', '仪器示值Rγ(2)', '仪器示值Rγ(3)', 
-                                   '仪器示值Rγ(4)', '仪器示值Rγ(5)', '仪器示值Rγ(6)', 
-                                   '仪器示值Rγ(7)', '仪器示值Rγ(8)', '仪器示值Rγ(9)', 
-                                   '仪器示值Rγ(10)', '宇宙射线', 'k3', '平均值', '标准差', '备注']
+                                   '仪器示值Rγ(4)', '仪器示值Rγ(5)', '宇宙射线', 'k3', '备注']
             else:
                 # 普通类型必需的列
                 required_columns = ['样本ID', '结果', '地址信息', '分析人员', '分析日期']
@@ -2784,8 +2784,8 @@ def test_import_excel(request):
                                     except Exception as calc_e:
                                         print(f"计算宇宙射线响应值失败: {calc_e}")
                                 
-                                # 优先使用计算值，其次使用Excel中的值
-                                xc_response = calculated_xc if calculated_xc else (test.cosmic_ray or 0)
+                                # 优先使用计算值
+                                cosmic_ray_response = calculated_xc if calculated_xc else 0
                                 
                                 # 更新test的cosmic_ray字段为计算值
                                 if calculated_xc:
@@ -2793,12 +2793,12 @@ def test_import_excel(request):
                                 
                                 # 计算环境γ辐射剂量率
                                 env_gamma_val = calculate_env_gamma(
-                                    None,          # env_gamma参数（输出）
-                                    xc_response,   # xc_response_1
-                                    k3_val,        # k3
-                                    k1,            # k1
-                                    k2,            # k2
-                                    test.avg_value # avg
+                                    None,              # env_gamma参数（输出）
+                                    cosmic_ray_response, # xc_response_1: 宇宙射线响应值
+                                    k3_val,            # k3
+                                    k1,                # k1
+                                    k2,                # k2
+                                    test.avg_value     # avg
                                 )
                                 
                                 # 将计算结果保存为测试结果

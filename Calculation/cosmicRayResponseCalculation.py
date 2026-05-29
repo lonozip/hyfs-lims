@@ -35,7 +35,7 @@ def cosmicRayResponseCalculation(longitude, latitude, elevation, k3, xc_response
     """
     # 红碱淖湖基准点参数（固定常量）
     COSMIC_RAY_HONG = 42.31795062 # 红碱淖湖基准点宇宙射线剂量率（nGy/h）
-    xc_response = 13.0 # 基准点宇宙射线响应值（nGy/h）
+    # xc_response 由调用方传入，不再在此处覆盖
     # 计算太阳赤纬角正弦值
     # 公式基于地理坐标和太阳位置关系，用于修正宇宙射线随纬度的变化
     SinlanmudaM = math.sin(math.radians(latitude)) * math.cos(math.radians(11.7)) + \
